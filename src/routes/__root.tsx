@@ -81,11 +81,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "VeritasAI X — AI Browser Security & Threat Intelligence" },
       { name: "description", content: "Enterprise-grade AI cybersecurity platform: real-time phishing, scam, and dark pattern detection with explainable threat intelligence." },
       { name: "author", content: "VeritasAI" },
-      { property: "og:title", content: "VeritasAI X — AI Browser Security Platform" },
-      { property: "og:description", content: "Production-grade SOC dashboard with AI threat detection, trust scoring, and Chrome extension." },
+      { property: "og:title", content: "VeritasAI X — AI Browser Security & Threat Intelligence" },
+      { property: "og:description", content: "Enterprise-grade AI cybersecurity platform: real-time phishing, scam, and dark pattern detection with explainable threat intelligence." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "VeritasAI X — AI Browser Security & Threat Intelligence" },
+      { name: "twitter:description", content: "Enterprise-grade AI cybersecurity platform: real-time phishing, scam, and dark pattern detection with explainable threat intelligence." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1f258d29-b9d5-4254-9869-54d5585a8a9e/id-preview-f24dd512--009d1bc3-025a-49cd-8117-2ad87333e151.lovable.app-1780114117781.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/1f258d29-b9d5-4254-9869-54d5585a8a9e/id-preview-f24dd512--009d1bc3-025a-49cd-8117-2ad87333e151.lovable.app-1780114117781.png" },
     ],
     links: [
       {
