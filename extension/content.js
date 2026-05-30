@@ -21,7 +21,7 @@
   };
 
   chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
-    const updated = [scanResult, ...scanHistory];
+    const updated = [scanResult, ...scanHistory].slice(0, 50);
     chrome.storage.local.set({ scanHistory: updated });
     localStorage.setItem("veritasai_scans", JSON.stringify(updated));
   });
