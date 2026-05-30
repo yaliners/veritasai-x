@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AppSidebar } from "@/components/veritas/app-sidebar";
 
 function NotFoundComponent() {
   return (
@@ -118,8 +119,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <Outlet />
+        </div>
+      </div>
     </QueryClientProvider>
   );
 }
