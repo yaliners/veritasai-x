@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrustedRouteImport } from './routes/trusted'
 import { Route as ThreatsRouteImport } from './routes/threats'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TrustedRoute = TrustedRouteImport.update({
+  id: '/trusted',
+  path: '/trusted',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ThreatsRoute = ThreatsRouteImport.update({
   id: '/threats',
   path: '/threats',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/threats': typeof ThreatsRoute
+  '/trusted': typeof TrustedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/threats': typeof ThreatsRoute
+  '/trusted': typeof TrustedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/threats': typeof ThreatsRoute
+  '/trusted': typeof TrustedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/threats'
+  fullPaths: '/' | '/analytics' | '/threats' | '/trusted'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/threats'
-  id: '__root__' | '/' | '/analytics' | '/threats'
+  to: '/' | '/analytics' | '/threats' | '/trusted'
+  id: '__root__' | '/' | '/analytics' | '/threats' | '/trusted'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   ThreatsRoute: typeof ThreatsRoute
+  TrustedRoute: typeof TrustedRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trusted': {
+      id: '/trusted'
+      path: '/trusted'
+      fullPath: '/trusted'
+      preLoaderRoute: typeof TrustedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/threats': {
       id: '/threats'
       path: '/threats'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   ThreatsRoute: ThreatsRoute,
+  TrustedRoute: TrustedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
