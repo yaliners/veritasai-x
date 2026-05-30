@@ -30,9 +30,9 @@ function AnalyticsCenter() {
   }, [threats]);
 
   const total = threats.length;
-  const avgThreat = Math.round(threats.reduce((s, t) => s + t.score, 0) / total);
-  const avgTrust = Math.round(threats.reduce((s, t) => s + t.trustScore, 0) / total);
-  const aiConf = Math.round(threats.reduce((s, t) => s + t.confidence, 0) / total);
+  const avgThreat = total > 0 ? Math.round(threats.reduce((s, t) => s + t.score, 0) / total) : 0;
+  const avgTrust = total > 0 ? Math.round(threats.reduce((s, t) => s + t.trustScore, 0) / total) : 0;
+  const aiConf = total > 0 ? Math.round(threats.reduce((s, t) => s + t.confidence, 0) / total) : 0;
 
   const riskData = [
     { name: "Dangerous", value: counts.DANGEROUS },
@@ -47,11 +47,36 @@ function AnalyticsCenter() {
     return Object.entries(m).map(([name, value]) => ({ name, value }));
   }, [threats]);
 
-  const trendData = useMemo(() => Array.from({ length: 14 }).map((_, i) => ({
-    day: `D${i + 1}`,
-    threat: Math.round(30 + Math.random() * 40 + (i > 7 ? 10 : 0)),
-    trust: Math.round(60 + Math.random() * 25),
-  })), []);
+  const trendData = useMemo(() => {
+    return Array.from({ length: 14 }).map((_, i) => {
+      const dayStart = (14 - i - 1) * 86400000;
+      const dayEnd = (14 - i) * 86400000;
+      const now = Date.now();
+      const threatsInDay = threats.filter((t) => {
+        const age = now - t.timestamp;
+        return age >= dayStart && age < dayEnd;
+      }).length;
+      const avgScoreInDay = threats
+        .filter((t) => {
+          const age = now - t.timestamp;
+          return age >= dayStart && age < dayEnd;
+        })
+        .reduce((s, t) => s + t.score, 0) || 0;
+      const threatScoreInDay = threatsInDay > 0 ? Math.round(avgScoreInDay / threatsInDay) : 0;
+      const avgTrustInDay = threats
+        .filter((t) => {
+          const age = now - t.timestamp;
+          return age >= dayStart && age < dayEnd;
+        })
+        .reduce((s, t) => s + t.trustScore, 0) || 0;
+      const trustScoreInDay = threatsInDay > 0 ? Math.round(avgTrustInDay / threatsInDay) : 0;
+      return {
+        day: `D${i + 1}`,
+        threat: threatScoreInDay,
+        trust: trustScoreInDay,
+      };
+    });
+  }, [threats]);
 
   const topCategory = useMemo(() => {
     const sorted = [...moduleData].sort((a, b) => b.value - a.value);

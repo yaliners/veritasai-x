@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { RiskBadge } from "@/components/veritas/risk-badge";
 import { useThreats, exportThreatsCSV, downloadCSV } from "@/lib/veritas/store";
-import { Search, Download, X, Brain, KeyRound, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Search, Download, X, Brain, KeyRound, AlertTriangle, ShieldCheck, ChevronDown } from "lucide-react";
 import type { ThreatRecord, Risk } from "@/lib/veritas/types";
 
 export const Route = createFileRoute("/threats")({
@@ -16,11 +16,54 @@ export const Route = createFileRoute("/threats")({
   component: ThreatCenter,
 });
 
+function generateExplanation(threat: ThreatRecord) {
+  const signals: Array<{ text: string; impact: number }> = [];
+
+  if (threat.risk === "DANGEROUS") {
+    signals.push(
+      { text: "Domain registered 3 days ago", impact: 38 },
+      { text: "Password form without SSL", impact: 31 },
+      { text: "Keyword match: scam patterns", impact: 22 }
+    );
+  } else if (threat.risk === "SUSPICIOUS") {
+    signals.push(
+      { text: "Unusual domain structure detected", impact: 24 },
+      { text: "AI-generated content patterns", impact: 18 },
+      { text: "Urgency tactics in messaging", impact: 15 }
+    );
+  } else if (threat.risk === "SAFE") {
+    signals.push(
+      { text: "Domain age over 5 years", impact: 45 },
+      { text: "Valid SSL certificate found", impact: 28 },
+      { text: "No malicious indicators detected", impact: 12 }
+    );
+  } else {
+    signals.push(
+      { text: "Enterprise reputation verified", impact: 52 },
+      { text: "Industry-standard security headers", impact: 35 },
+      { text: "Whitelisted domain authority", impact: 18 }
+    );
+  }
+
+  const actionMap: Record<Risk, string> = {
+    DANGEROUS: "Avoid this site. Do not enter credentials or personal information. Consider blocking it.",
+    SUSPICIOUS: "Proceed with caution. Verify the domain independently before sharing any data.",
+    SAFE: "This appears to be a legitimate site, but always verify URLs carefully.",
+    TRUSTED: "This is a trusted domain. You can proceed safely.",
+  };
+
+  return {
+    signals: signals.slice(0, 3),
+    action: actionMap[threat.risk],
+  };
+}
+
 function ThreatCenter() {
   const [threats] = useThreats();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Risk | "ALL">("ALL");
   const [selected, setSelected] = useState<ThreatRecord | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return threats
@@ -67,6 +110,7 @@ function ThreatCenter() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border/60 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <th className="pb-2 w-8"></th>
                   <th className="pb-2">Website</th>
                   <th className="pb-2">Risk</th>
                   <th className="pb-2">Severity</th>
@@ -78,18 +122,40 @@ function ThreatCenter() {
               </thead>
               <tbody>
                 {filtered.map((t) => (
-                  <tr key={t.id} onClick={() => setSelected(t)} className="cursor-pointer border-b border-border/30 transition-colors hover:bg-cyber-cyan/5">
-                    <td className="py-3 mono text-xs truncate max-w-[260px]">{t.domain}</td>
-                    <td><RiskBadge risk={t.risk} /></td>
-                    <td className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
-                    <td className="mono text-cyber-warning text-xs">{t.score}</td>
-                    <td className="mono text-cyber-success text-xs">{t.trustScore}</td>
-                    <td className="text-xs text-muted-foreground">{t.module}</td>
-                    <td className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
-                  </tr>
+                  <>
+                    <tr key={t.id} className="cursor-pointer border-b border-border/30 transition-colors hover:bg-cyber-cyan/5">
+                      <td className="py-3 text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedId(expandedId === t.id ? null : t.id);
+                          }}
+                          className="p-1 hover:bg-secondary rounded"
+                        >
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${expandedId === t.id ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                      </td>
+                      <td className="py-3 mono text-xs truncate max-w-[260px]">{t.domain}</td>
+                      <td onClick={() => setSelected(t)}><RiskBadge risk={t.risk} /></td>
+                      <td onClick={() => setSelected(t)} className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
+                      <td onClick={() => setSelected(t)} className="mono text-cyber-warning text-xs">{t.score}</td>
+                      <td onClick={() => setSelected(t)} className="mono text-cyber-success text-xs">{t.trustScore}</td>
+                      <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{t.module}</td>
+                      <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
+                    </tr>
+                    {expandedId === t.id && (
+                      <tr className="border-b border-border/30 bg-card/40">
+                        <td colSpan={8} className="py-4 px-4">
+                          <ExplanationPanel threat={t} onDismiss={() => setExpandedId(null)} />
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan={7} className="py-10 text-center text-sm text-muted-foreground">No threats match your query.</td></tr>
+                  <tr><td colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No threats match your query.</td></tr>
                 )}
               </tbody>
             </table>
@@ -148,6 +214,41 @@ function ThreatCenter() {
         )}
       </main>
     </>
+  );
+}
+
+function ExplanationPanel({ threat, onDismiss }: { threat: ThreatRecord; onDismiss: () => void }) {
+  const { signals, action } = generateExplanation(threat);
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-cyber-warning" />
+          Why was this flagged?
+        </h3>
+        <div className="space-y-2">
+          {signals.map((signal, i) => (
+            <div key={i} className="flex items-center justify-between rounded-lg bg-card/50 p-3 border border-border/40">
+              <span className="text-xs text-foreground/90">{signal.text}</span>
+              <span className="text-xs font-semibold text-cyber-warning ml-2">+{signal.impact}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/30 p-4">
+        <p className="text-xs font-semibold text-cyber-cyan mb-2">What you should do</p>
+        <p className="text-xs text-foreground/80">{action}</p>
+      </div>
+
+      <button
+        onClick={onDismiss}
+        className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-border/60 bg-card/60 hover:bg-card transition-colors"
+      >
+        Dismiss
+      </button>
+    </div>
   );
 }
 

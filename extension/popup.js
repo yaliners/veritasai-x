@@ -70,5 +70,5 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 });
 
 document.getElementById("openDash").addEventListener("click", () => {
-  chrome.tabs.create({ url: "https://veritas-ai-x.lovable.app" });
+  chrome.tabs.create({ url: "https://veritasai-x.lovable.app" });
 });

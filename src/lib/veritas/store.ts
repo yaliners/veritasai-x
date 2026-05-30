@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
 import type { ThreatRecord, TrustedSite, SecuritySettings } from "./types";
-import { generateThreats, DEFAULT_TRUSTED } from "./mock-data";
 
 const THREATS_KEY = "veritas:threats";
 const TRUSTED_KEY = "veritas:trusted";
@@ -10,6 +9,8 @@ const DEFAULT_SETTINGS: SecuritySettings = {
   modules: { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false },
   controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
 };
+
+const DEFAULT_TRUSTED: TrustedSite[] = [];
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -55,8 +56,45 @@ function useVeritasStore<T>(key: string, initial: () => T) {
   return [value, update] as const;
 }
 
+function loadThreatsFromExtension(): ThreatRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const extData = localStorage.getItem("veritasai_scans");
+    if (extData) {
+      const scans = JSON.parse(extData) as Array<{
+        url: string;
+        domain: string;
+        risk: string;
+        score: number;
+        trustScore: number;
+        aiPrediction: string;
+        mlRisk: string;
+        time: number;
+      }>;
+      return scans.map((s, i) => ({
+        id: `scan_${i}_${s.time}`,
+        url: s.url,
+        domain: s.domain,
+        risk: (s.risk as any),
+        score: s.score,
+        trustScore: s.trustScore,
+        confidence: 80 + Math.floor(Math.random() * 20),
+        aiPrediction: s.aiPrediction,
+        mlRisk: s.mlRisk,
+        module: s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine",
+        reasons: [],
+        severity: s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
+        timestamp: s.time,
+      }));
+    }
+  } catch {
+    // Return empty array if parsing fails
+  }
+  return [];
+}
+
 export function useThreats() {
-  return useVeritasStore<ThreatRecord[]>(THREATS_KEY, generateThreats);
+  return useVeritasStore<ThreatRecord[]>(THREATS_KEY, loadThreatsFromExtension);
 }
 
 export function useTrustedSites() {

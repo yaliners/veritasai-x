@@ -9,6 +9,23 @@
   SCAM.forEach((k) => { if (text.includes(k)) { score += 25; reasons.push("Scam phrase: " + k); } });
   if (document.querySelector('input[type="password"]') && !location.protocol.includes("https")) { score += 30; reasons.push("Password field on insecure page"); }
 
+  const scanResult = {
+    url: url,
+    domain: new URL(url).hostname,
+    risk: score >= 85 ? "DANGEROUS" : score >= 50 ? "SUSPICIOUS" : "SAFE",
+    score: Math.min(100, score),
+    trustScore: Math.max(0, 100 - score),
+    aiPrediction: score >= 85 ? "Malicious" : score >= 50 ? "Suspicious" : "Benign",
+    mlRisk: (Math.min(100, score) / 100).toFixed(2),
+    time: Date.now(),
+  };
+
+  chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
+    const updated = [scanResult, ...scanHistory];
+    chrome.storage.local.set({ scanHistory: updated });
+    localStorage.setItem("veritasai_scans", JSON.stringify(updated));
+  });
+
   if (score >= 65) {
     chrome.storage.local.get(["settings"], ({ settings = { overlay: true } }) => {
       if (!settings.overlay) return;

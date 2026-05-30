@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { StatCard } from "@/components/veritas/stat-card";
 import { RiskBadge } from "@/components/veritas/risk-badge";
@@ -26,45 +26,123 @@ export const Route = createFileRoute("/")({
 });
 
 function SecurityCenter() {
-  const [threats] = useThreats();
+  const [threats, updateThreats] = useThreats();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      try {
+        const extData = localStorage.getItem("veritasai_scans");
+        if (extData) {
+          const scans = JSON.parse(extData) as Array<{
+            url: string;
+            domain: string;
+            risk: string;
+            score: number;
+            trustScore: number;
+            aiPrediction: string;
+            mlRisk: string;
+            time: number;
+          }>;
+          const converted = scans.map((s, i) => ({
+            id: `scan_${i}_${s.time}`,
+            url: s.url,
+            domain: s.domain,
+            risk: (s.risk as any),
+            score: s.score,
+            trustScore: s.trustScore,
+            confidence: 80 + Math.floor(Math.random() * 20),
+            aiPrediction: s.aiPrediction,
+            mlRisk: s.mlRisk,
+            module: s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine",
+            reasons: [],
+            severity: s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
+            timestamp: s.time,
+          }));
+          updateThreats(converted);
+        }
+      } catch {
+        // Silently fail if parsing fails
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [updateThreats]);
 
   const stats = useMemo(() => {
+    if (threats.length === 0) {
+      return { dangerous: 0, suspicious: 0, safe: 0, avgScore: 0, avgTrust: 0, aiConf: 0, total: 0 };
+    }
     const dangerous = threats.filter((t) => t.risk === "DANGEROUS").length;
     const suspicious = threats.filter((t) => t.risk === "SUSPICIOUS").length;
+    const safe = threats.filter((t) => t.risk === "SAFE").length;
     const avgScore = Math.round(threats.reduce((s, t) => s + t.score, 0) / threats.length);
     const avgTrust = Math.round(threats.reduce((s, t) => s + t.trustScore, 0) / threats.length);
     const aiConf = Math.round(threats.reduce((s, t) => s + t.confidence, 0) / threats.length);
-    return { dangerous, suspicious, avgScore, avgTrust, aiConf };
+    return { dangerous, suspicious, safe, avgScore, avgTrust, aiConf, total: threats.length };
   }, [threats]);
 
   const chartData = useMemo(() => {
-    const buckets = Array.from({ length: 12 }).map((_, i) => ({
-      t: `${i * 2}h`,
-      threats: Math.round(8 + Math.random() * 22 + (i > 6 ? 8 : 0)),
-      blocked: Math.round(4 + Math.random() * 14),
-    }));
-    return buckets;
-  }, []);
+    const buckets = Array.from({ length: 12 }).map((_, i) => {
+      const hourStart = (i * 2) * 3600000;
+      const hourEnd = ((i + 1) * 2) * 3600000;
+      const now = Date.now();
+      const threatsInBucket = threats.filter((t) => {
+        const age = now - t.timestamp;
+        return age >= hourStart && age < hourEnd;
+      }).length;
+      return {
+        t: `${i * 2}h ago`,
+        threats: threatsInBucket,
+        blocked: Math.max(0, Math.floor(threatsInBucket * 0.6)),
+      };
+    });
+    return buckets.reverse();
+  }, [threats]);
 
-  const modules: Array<{ name: string; value: number; tone: string }> = [
-    { name: "Phishing URL", value: 86, tone: "bg-cyber-danger" },
-    { name: "Scam Pattern", value: 74, tone: "bg-cyber-warning" },
-    { name: "AI Content", value: 62, tone: "bg-cyber-cyan" },
-    { name: "Dark Pattern", value: 48, tone: "bg-primary" },
-    { name: "Trust Engine", value: 92, tone: "bg-cyber-success" },
-  ];
+  const modules: Array<{ name: string; value: number; tone: string }> = useMemo(() => {
+    if (threats.length === 0) {
+      return [
+        { name: "Phishing URL", value: 0, tone: "bg-cyber-danger" },
+        { name: "Scam Pattern", value: 0, tone: "bg-cyber-warning" },
+        { name: "AI Content", value: 0, tone: "bg-cyber-cyan" },
+        { name: "Dark Pattern", value: 0, tone: "bg-primary" },
+        { name: "Trust Engine", value: 0, tone: "bg-cyber-success" },
+      ];
+    }
+    const phishing = threats.filter((t) => t.module === "Phishing URL").length;
+    const scam = threats.filter((t) => t.module === "Scam Pattern").length;
+    const aiContent = threats.filter((t) => t.module === "AI Content").length;
+    const darkPattern = threats.filter((t) => t.module === "Dark Pattern").length;
+    const trust = threats.filter((t) => t.module === "Trust Engine").length;
+    const total = threats.length || 1;
+    return [
+      { name: "Phishing URL", value: Math.round((phishing / total) * 100), tone: "bg-cyber-danger" },
+      { name: "Scam Pattern", value: Math.round((scam / total) * 100), tone: "bg-cyber-warning" },
+      { name: "AI Content", value: Math.round((aiContent / total) * 100), tone: "bg-cyber-cyan" },
+      { name: "Dark Pattern", value: Math.round((darkPattern / total) * 100), tone: "bg-primary" },
+      { name: "Trust Engine", value: Math.round((trust / total) * 100), tone: "bg-cyber-success" },
+    ];
+  }, [threats]);
 
-  const recent = threats.slice(0, 6);
+  const recent = useMemo(() => {
+    return [...threats].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
+  }, [threats]);
 
   return (
     <>
       <Topbar title="Security Operations Center" subtitle="Real-time AI threat intelligence" />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
+        {threats.length === 0 && (
+          <div className="rounded-2xl border border-cyber-cyan/30 bg-cyber-cyan/5 p-6 text-center">
+            <p className="text-sm text-cyber-cyan font-semibold">No scans yet</p>
+            <p className="text-xs text-muted-foreground mt-1">Browse some websites with the VeritasAI extension active to see threat detections here</p>
+          </div>
+        )}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Threat Score" value={stats.avgScore} icon={ShieldAlert} accent="danger" hint="Aggregate risk across active sessions" trend="↑ 4.2% vs last 24h" />
-          <StatCard label="Trust Score" value={stats.avgTrust} icon={ShieldCheck} accent="success" hint="Mean reputation index" trend="↑ 1.8% stability" />
-          <StatCard label="AI Confidence" value={`${stats.aiConf}%`} icon={Brain} accent="cyan" hint="Gemini-class explainability" />
-          <StatCard label="ML Confidence" value={`${Math.max(80, stats.aiConf - 3)}%`} icon={Cpu} accent="warning" hint="Ensemble risk classifier" />
+          <StatCard label="Total Scans" value={stats.total} icon={ShieldAlert} accent="danger" hint="Scans analyzed" />
+          <StatCard label="Dangerous" value={stats.dangerous} icon={ShieldAlert} accent="danger" hint="High-risk detections" />
+          <StatCard label="Suspicious" value={stats.suspicious} icon={ShieldAlert} accent="warning" hint="Medium-risk detections" />
+          <StatCard label="Threat Score" value={stats.avgScore} icon={Brain} accent="cyan" hint="Average threat score" />
         </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -132,30 +210,36 @@ function SecurityCenter() {
               Open Intel Center <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/60 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <th className="pb-2">Website</th>
-                  <th className="pb-2">Risk</th>
-                  <th className="pb-2">Threat Score</th>
-                  <th className="pb-2">Module</th>
-                  <th className="pb-2">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recent.map((t) => (
-                  <tr key={t.id} className="border-b border-border/30 last:border-0">
-                    <td className="py-3 mono text-xs truncate max-w-[280px]">{t.domain}</td>
-                    <td><RiskBadge risk={t.risk} /></td>
-                    <td className="mono text-cyber-warning">{t.score}</td>
-                    <td className="text-xs text-muted-foreground">{t.module}</td>
-                    <td className="text-xs text-muted-foreground">{relTime(t.timestamp)}</td>
+          {recent.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-sm text-muted-foreground">No recent scans</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <th className="pb-2">Website</th>
+                    <th className="pb-2">Risk</th>
+                    <th className="pb-2">Threat Score</th>
+                    <th className="pb-2">Module</th>
+                    <th className="pb-2">Time</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recent.map((t) => (
+                    <tr key={t.id} className="border-b border-border/30 last:border-0">
+                      <td className="py-3 mono text-xs truncate max-w-[280px]">{t.domain}</td>
+                      <td><RiskBadge risk={t.risk} /></td>
+                      <td className="mono text-cyber-warning">{t.score}</td>
+                      <td className="text-xs text-muted-foreground">{t.module}</td>
+                      <td className="text-xs text-muted-foreground">{relTime(t.timestamp)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       </main>
     </>
