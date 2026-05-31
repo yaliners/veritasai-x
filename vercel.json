@@ -4,5 +4,8 @@
   "installCommand": "npm install",
   "env": {
     "VITE_APP_TITLE": "VeritasAI X"
-  }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }
