@@ -4,12 +4,8 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
-  HeadContent,
-  Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
 
-import appCss from "../styles.css?url";
 import { AppSidebar } from "@/components/veritas/app-sidebar";
 
 function NotFoundComponent() {
@@ -70,46 +66,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "VeritasAI X — AI Browser Security & Threat Intelligence" },
-      { name: "description", content: "Enterprise-grade AI cybersecurity platform: real-time phishing, scam, and dark pattern detection with explainable threat intelligence." },
-      { name: "author", content: "VeritasAI" },
-      { property: "og:title", content: "VeritasAI X — AI Browser Security & Threat Intelligence" },
-      { property: "og:description", content: "Enterprise-grade AI cybersecurity platform: real-time phishing, scam, and dark pattern detection with explainable threat intelligence." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "VeritasAI X — AI Browser Security & Threat Intelligence" },
-      { name: "twitter:description", content: "Enterprise-grade AI cybersecurity platform: real-time phishing, scam, and dark pattern detection with explainable threat intelligence" },
-    ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
-    ],
-  }),
-  shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
-
-function RootShell({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  );
-}
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
