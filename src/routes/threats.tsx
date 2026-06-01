@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { RiskBadge } from "@/components/veritas/risk-badge";
+import { EmptyState } from "@/components/veritas/empty-state";
 import { useThreats, exportThreatsCSV, downloadCSV } from "@/lib/veritas/store";
 import { Search, Download, X, Brain, KeyRound, AlertTriangle, ShieldCheck, ChevronDown } from "lucide-react";
 import type { ThreatRecord, Risk } from "@/lib/veritas/types";
@@ -83,84 +84,90 @@ function ThreatCenter() {
     <>
       <Topbar title="Threat Intelligence Center" subtitle="Forensic database with XAI explainability" />
       <main className="flex flex-1 gap-6 p-4 lg:p-8">
-        <div className="glass flex-1 rounded-2xl p-6 shadow-[var(--shadow-card)]">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/60 px-3 py-1.5">
-                <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search domain or module…" className="w-64 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />
+        {threats.length === 0 ? (
+          <div className="glass flex-1 rounded-2xl p-6 shadow-[var(--shadow-card)] flex items-center justify-center">
+            <EmptyState />
+          </div>
+        ) : (
+          <div className="glass flex-1 rounded-2xl p-6 shadow-[var(--shadow-card)]">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/60 px-3 py-1.5">
+                  <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search domain or module…" className="w-64 bg-transparent text-xs outline-none placeholder:text-muted-foreground" />
+                </div>
+                <select value={filter} onChange={(e) => setFilter(e.target.value as Risk | "ALL")} className="rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-xs">
+                  <option value="ALL">All risk</option>
+                  <option value="DANGEROUS">Dangerous</option>
+                  <option value="SUSPICIOUS">Suspicious</option>
+                  <option value="SAFE">Safe</option>
+                  <option value="TRUSTED">Trusted</option>
+                </select>
               </div>
-              <select value={filter} onChange={(e) => setFilter(e.target.value as Risk | "ALL")} className="rounded-lg border border-border/60 bg-card/60 px-3 py-1.5 text-xs">
-                <option value="ALL">All risk</option>
-                <option value="DANGEROUS">Dangerous</option>
-                <option value="SUSPICIOUS">Suspicious</option>
-                <option value="SAFE">Safe</option>
-                <option value="TRUSTED">Trusted</option>
-              </select>
+              <button
+                onClick={() => downloadCSV("veritas-threats.csv", exportThreatsCSV(filtered))}
+                className="inline-flex items-center gap-2 rounded-lg border border-cyber-cyan/40 bg-cyber-cyan/10 px-3 py-1.5 text-xs font-semibold text-cyber-cyan hover:bg-cyber-cyan/20"
+              >
+                <Download className="h-3.5 w-3.5" /> Export CSV
+              </button>
             </div>
-            <button
-              onClick={() => downloadCSV("veritas-threats.csv", exportThreatsCSV(filtered))}
-              className="inline-flex items-center gap-2 rounded-lg border border-cyber-cyan/40 bg-cyber-cyan/10 px-3 py-1.5 text-xs font-semibold text-cyber-cyan hover:bg-cyber-cyan/20"
-            >
-              <Download className="h-3.5 w-3.5" /> Export CSV
-            </button>
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/60 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <th className="pb-2 w-8"></th>
-                  <th className="pb-2">Website</th>
-                  <th className="pb-2">Risk</th>
-                  <th className="pb-2">Severity</th>
-                  <th className="pb-2">Score</th>
-                  <th className="pb-2">Trust</th>
-                  <th className="pb-2">Module</th>
-                  <th className="pb-2">Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((t) => (
-                  <>
-                    <tr key={t.id} className="cursor-pointer border-b border-border/30 transition-colors hover:bg-cyber-cyan/5">
-                      <td className="py-3 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedId(expandedId === t.id ? null : t.id);
-                          }}
-                          className="p-1 hover:bg-secondary rounded"
-                        >
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${expandedId === t.id ? "rotate-180" : ""}`}
-                          />
-                        </button>
-                      </td>
-                      <td className="py-3 mono text-xs truncate max-w-[260px]">{t.domain}</td>
-                      <td onClick={() => setSelected(t)}><RiskBadge risk={t.risk} /></td>
-                      <td onClick={() => setSelected(t)} className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
-                      <td onClick={() => setSelected(t)} className="mono text-cyber-warning text-xs">{t.score}</td>
-                      <td onClick={() => setSelected(t)} className="mono text-cyber-success text-xs">{t.trustScore}</td>
-                      <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{t.module}</td>
-                      <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
-                    </tr>
-                    {expandedId === t.id && (
-                      <tr className="border-b border-border/30 bg-card/40">
-                        <td colSpan={8} className="py-4 px-4">
-                          <ExplanationPanel threat={t} onDismiss={() => setExpandedId(null)} />
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border/60 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <th className="pb-2 w-8"></th>
+                    <th className="pb-2">Website</th>
+                    <th className="pb-2">Risk</th>
+                    <th className="pb-2">Severity</th>
+                    <th className="pb-2">Score</th>
+                    <th className="pb-2">Trust</th>
+                    <th className="pb-2">Module</th>
+                    <th className="pb-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((t) => (
+                    <>
+                      <tr key={t.id} className="cursor-pointer border-b border-border/30 transition-colors hover:bg-cyber-cyan/5">
+                        <td className="py-3 text-center">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedId(expandedId === t.id ? null : t.id);
+                            }}
+                            className="p-1 hover:bg-secondary rounded"
+                          >
+                            <ChevronDown
+                              className={`h-4 w-4 transition-transform ${expandedId === t.id ? "rotate-180" : ""}`}
+                            />
+                          </button>
                         </td>
+                        <td className="py-3 mono text-xs truncate max-w-[260px]">{t.domain}</td>
+                        <td onClick={() => setSelected(t)}><RiskBadge risk={t.risk} /></td>
+                        <td onClick={() => setSelected(t)} className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
+                        <td onClick={() => setSelected(t)} className="mono text-cyber-warning text-xs">{t.score}</td>
+                        <td onClick={() => setSelected(t)} className="mono text-cyber-success text-xs">{t.trustScore}</td>
+                        <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{t.module}</td>
+                        <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
                       </tr>
-                    )}
-                  </>
-                ))}
-                {filtered.length === 0 && (
-                  <tr><td colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No threats match your query.</td></tr>
-                )}
-              </tbody>
-            </table>
+                      {expandedId === t.id && (
+                        <tr className="border-b border-border/30 bg-card/40">
+                          <td colSpan={8} className="py-4 px-4">
+                            <ExplanationPanel threat={t} onDismiss={() => setExpandedId(null)} />
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr><td colSpan={8} className="py-10 text-center text-sm text-muted-foreground">No threats match your query.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {selected && (
           <aside className="glass w-96 shrink-0 rounded-2xl p-6 shadow-[var(--shadow-card)]">

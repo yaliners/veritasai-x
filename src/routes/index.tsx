@@ -3,6 +3,7 @@ import { useMemo, useEffect, useState } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { StatCard } from "@/components/veritas/stat-card";
 import { RiskBadge } from "@/components/veritas/risk-badge";
+import { EmptyState } from "@/components/veritas/empty-state";
 import { useThreats } from "@/lib/veritas/store";
 import { ShieldCheck, ShieldAlert, Brain, Cpu, ArrowUpRight, Activity } from "lucide-react";
 import {
@@ -167,23 +168,24 @@ function SecurityCenter() {
         }))}
       />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
-        {filteredThreats.length === 0 && (
+        {threats.length === 0 ? (
+          <EmptyState />
+        ) : searchQuery && filteredThreats.length === 0 ? (
           <div className="rounded-2xl border border-cyber-cyan/30 bg-cyber-cyan/5 p-6 text-center">
-            <p className="text-sm text-cyber-cyan font-semibold">{searchQuery ? "No results found" : "No scans yet"}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {searchQuery
-                ? `Try a different search term`
-                : "Browse some websites with the VeritasAI extension active to see threat detections here"}
-            </p>
+            <p className="text-sm text-cyber-cyan font-semibold">No results found</p>
+            <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
           </div>
+        ) : null}
+        {threats.length > 0 && (
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Total Scans" value={stats.total} icon={ShieldAlert} accent="danger" hint="Scans analyzed" />
+            <StatCard label="Dangerous" value={stats.dangerous} icon={ShieldAlert} accent="danger" hint="High-risk detections" />
+            <StatCard label="Suspicious" value={stats.suspicious} icon={ShieldAlert} accent="warning" hint="Medium-risk detections" />
+            <StatCard label="Threat Score" value={stats.avgScore} icon={Brain} accent="cyan" hint="Average threat score" />
+          </section>
         )}
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Scans" value={stats.total} icon={ShieldAlert} accent="danger" hint="Scans analyzed" />
-          <StatCard label="Dangerous" value={stats.dangerous} icon={ShieldAlert} accent="danger" hint="High-risk detections" />
-          <StatCard label="Suspicious" value={stats.suspicious} icon={ShieldAlert} accent="warning" hint="Medium-risk detections" />
-          <StatCard label="Threat Score" value={stats.avgScore} icon={Brain} accent="cyan" hint="Average threat score" />
-        </section>
 
+        {threats.length > 0 && (
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           <div className="glass rounded-2xl p-6 xl:col-span-2 shadow-[var(--shadow-card)]">
             <div className="mb-4 flex items-center justify-between">
@@ -238,7 +240,9 @@ function SecurityCenter() {
             </div>
           </div>
         </section>
+        )}
 
+        {threats.length > 0 && (
         <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -280,6 +284,7 @@ function SecurityCenter() {
             </div>
           )}
         </section>
+        )}
       </main>
     </>
   );

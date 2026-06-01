@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { StatCard } from "@/components/veritas/stat-card";
+import { EmptyState } from "@/components/veritas/empty-state";
 import { useThreats } from "@/lib/veritas/store";
 import { ShieldCheck, ShieldAlert, ShieldX, Shield, Brain, TrendingUp } from "lucide-react";
 import {
@@ -87,12 +88,16 @@ function AnalyticsCenter() {
     <>
       <Topbar title="Analytics Center" subtitle="AI-augmented detection intelligence" />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
-        <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-          <StatCard label="Total Scans" value={total} icon={Shield} accent="cyan" />
-          <StatCard label="Dangerous" value={counts.DANGEROUS} icon={ShieldX} accent="danger" />
-          <StatCard label="Suspicious" value={counts.SUSPICIOUS} icon={ShieldAlert} accent="warning" />
-          <StatCard label="Safe + Trusted" value={counts.SAFE + counts.TRUSTED} icon={ShieldCheck} accent="success" />
-        </section>
+        {threats.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+              <StatCard label="Total Scans" value={total} icon={Shield} accent="cyan" />
+              <StatCard label="Dangerous" value={counts.DANGEROUS} icon={ShieldX} accent="danger" />
+              <StatCard label="Suspicious" value={counts.SUSPICIOUS} icon={ShieldAlert} accent="warning" />
+              <StatCard label="Safe + Trusted" value={counts.SAFE + counts.TRUSTED} icon={ShieldCheck} accent="success" />
+            </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           <div className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
@@ -153,6 +158,8 @@ function AnalyticsCenter() {
             <Insight label="Top Threat Category" value={topCategory} tone="text-cyber-warning" icon={TrendingUp} small />
           </div>
         </section>
+          </>
+        )}
       </main>
     </>
   );
