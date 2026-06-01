@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { StatCard } from "@/components/veritas/stat-card";
 import { RiskBadge } from "@/components/veritas/risk-badge";
@@ -27,6 +27,8 @@ export const Route = createFileRoute("/")({
 
 function SecurityCenter() {
   const [threats, updateThreats] = useThreats();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [lastNotified, setLastNotified] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -81,12 +83,34 @@ function SecurityCenter() {
     return { dangerous, suspicious, safe, avgScore, avgTrust, aiConf, total: threats.length };
   }, [threats]);
 
+  const filteredThreats = useMemo(() => {
+    if (!searchQuery.trim()) return threats;
+    const q = searchQuery.toLowerCase();
+    return threats.filter(
+      (t) =>
+        t.domain.toLowerCase().includes(q) ||
+        t.url.toLowerCase().includes(q) ||
+        t.risk.toLowerCase().includes(q) ||
+        t.module.toLowerCase().includes(q)
+    );
+  }, [threats, searchQuery]);
+
+  const notifications = useMemo(() => {
+    return threats.filter((t) => t.risk === "DANGEROUS").slice(0, 5);
+  }, [threats]);
+
+  useEffect(() => {
+    const newNotifs = new Set(lastNotified);
+    notifications.forEach((n) => newNotifs.add(n.id));
+    setLastNotified(newNotifs);
+  }, [notifications, lastNotified]);
+
   const chartData = useMemo(() => {
     const buckets = Array.from({ length: 12 }).map((_, i) => {
       const hourStart = (i * 2) * 3600000;
       const hourEnd = ((i + 1) * 2) * 3600000;
       const now = Date.now();
-      const threatsInBucket = threats.filter((t) => {
+      const threatsInBucket = filteredThreats.filter((t) => {
         const age = now - t.timestamp;
         return age >= hourStart && age < hourEnd;
       }).length;
@@ -97,10 +121,10 @@ function SecurityCenter() {
       };
     });
     return buckets.reverse();
-  }, [threats]);
+  }, [filteredThreats]);
 
   const modules: Array<{ name: string; value: number; tone: string }> = useMemo(() => {
-    if (threats.length === 0) {
+    if (filteredThreats.length === 0) {
       return [
         { name: "Phishing URL", value: 0, tone: "bg-cyber-danger" },
         { name: "Scam Pattern", value: 0, tone: "bg-cyber-warning" },
@@ -109,12 +133,12 @@ function SecurityCenter() {
         { name: "Trust Engine", value: 0, tone: "bg-cyber-success" },
       ];
     }
-    const phishing = threats.filter((t) => t.module === "Phishing URL").length;
-    const scam = threats.filter((t) => t.module === "Scam Pattern").length;
-    const aiContent = threats.filter((t) => t.module === "AI Content").length;
-    const darkPattern = threats.filter((t) => t.module === "Dark Pattern").length;
-    const trust = threats.filter((t) => t.module === "Trust Engine").length;
-    const total = threats.length || 1;
+    const phishing = filteredThreats.filter((t) => t.module === "Phishing URL").length;
+    const scam = filteredThreats.filter((t) => t.module === "Scam Pattern").length;
+    const aiContent = filteredThreats.filter((t) => t.module === "AI Content").length;
+    const darkPattern = filteredThreats.filter((t) => t.module === "Dark Pattern").length;
+    const trust = filteredThreats.filter((t) => t.module === "Trust Engine").length;
+    const total = filteredThreats.length || 1;
     return [
       { name: "Phishing URL", value: Math.round((phishing / total) * 100), tone: "bg-cyber-danger" },
       { name: "Scam Pattern", value: Math.round((scam / total) * 100), tone: "bg-cyber-warning" },
@@ -122,20 +146,35 @@ function SecurityCenter() {
       { name: "Dark Pattern", value: Math.round((darkPattern / total) * 100), tone: "bg-primary" },
       { name: "Trust Engine", value: Math.round((trust / total) * 100), tone: "bg-cyber-success" },
     ];
-  }, [threats]);
+  }, [filteredThreats]);
 
   const recent = useMemo(() => {
-    return [...threats].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
-  }, [threats]);
+    return [...filteredThreats].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
+  }, [filteredThreats]);
 
   return (
     <>
-      <Topbar title="Security Operations Center" subtitle="Real-time AI threat intelligence" />
+      <Topbar
+        title="Security Operations Center"
+        subtitle="Real-time AI threat intelligence"
+        onSearch={setSearchQuery}
+        notificationCount={notifications.length}
+        notifications={notifications.map((n) => ({
+          id: n.id,
+          domain: n.domain,
+          risk: n.risk,
+          timestamp: n.timestamp,
+        }))}
+      />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
-        {threats.length === 0 && (
+        {filteredThreats.length === 0 && (
           <div className="rounded-2xl border border-cyber-cyan/30 bg-cyber-cyan/5 p-6 text-center">
-            <p className="text-sm text-cyber-cyan font-semibold">No scans yet</p>
-            <p className="text-xs text-muted-foreground mt-1">Browse some websites with the VeritasAI extension active to see threat detections here</p>
+            <p className="text-sm text-cyber-cyan font-semibold">{searchQuery ? "No results found" : "No scans yet"}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {searchQuery
+                ? `Try a different search term`
+                : "Browse some websites with the VeritasAI extension active to see threat detections here"}
+            </p>
           </div>
         )}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
