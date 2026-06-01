@@ -129,30 +129,26 @@ function ThreatCenter() {
                 <tbody>
                   {filtered.map((t) => (
                     <>
-                      <tr key={t.id} className="cursor-pointer border-b border-border/30 transition-colors hover:bg-cyber-cyan/5">
+                      <tr
+                        key={t.id}
+                        onClick={() => setExpandedId(expandedId === t.id ? null : t.id)}
+                        className="cursor-pointer border-b border-border/30 transition-colors hover:bg-cyber-cyan/5"
+                      >
                         <td className="py-3 text-center">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedId(expandedId === t.id ? null : t.id);
-                            }}
-                            className="p-1 hover:bg-secondary rounded"
-                          >
-                            <ChevronDown
-                              className={`h-4 w-4 transition-transform ${expandedId === t.id ? "rotate-180" : ""}`}
-                            />
-                          </button>
+                          <ChevronDown
+                            className={`h-4 w-4 transition-transform ${expandedId === t.id ? "rotate-180" : ""}`}
+                          />
                         </td>
                         <td className="py-3 mono text-xs truncate max-w-[260px]">{t.domain}</td>
-                        <td onClick={() => setSelected(t)}><RiskBadge risk={t.risk} /></td>
-                        <td onClick={() => setSelected(t)} className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
-                        <td onClick={() => setSelected(t)} className="mono text-cyber-warning text-xs">{t.score}</td>
-                        <td onClick={() => setSelected(t)} className="mono text-cyber-success text-xs">{t.trustScore}</td>
-                        <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{t.module}</td>
-                        <td onClick={() => setSelected(t)} className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
+                        <td><RiskBadge risk={t.risk} /></td>
+                        <td className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
+                        <td className="mono text-cyber-warning text-xs">{t.score}</td>
+                        <td className="mono text-cyber-success text-xs">{t.trustScore}</td>
+                        <td className="text-xs text-muted-foreground">{t.module}</td>
+                        <td className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
                       </tr>
                       {expandedId === t.id && (
-                        <tr className="border-b border-border/30 bg-card/40">
+                        <tr className="border-b border-border/30">
                           <td colSpan={8} className="py-4 px-4">
                             <ExplanationPanel threat={t} onDismiss={() => setExpandedId(null)} />
                           </td>
@@ -227,31 +223,38 @@ function ThreatCenter() {
 function ExplanationPanel({ threat, onDismiss }: { threat: ThreatRecord; onDismiss: () => void }) {
   const { signals, action } = generateExplanation(threat);
 
+  const borderColor = {
+    DANGEROUS: "border-l-cyber-danger",
+    SUSPICIOUS: "border-l-cyber-warning",
+    SAFE: "border-l-cyber-success",
+    TRUSTED: "border-l-cyber-success",
+  }[threat.risk];
+
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+    <div className={`rounded-lg border border-border/40 bg-card/50 p-6 border-l-4 ${borderColor}`}>
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-cyber-warning" />
           Why was this flagged?
         </h3>
         <div className="space-y-2">
           {signals.map((signal, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg bg-card/50 p-3 border border-border/40">
-              <span className="text-xs text-foreground/90">{signal.text}</span>
-              <span className="text-xs font-semibold text-cyber-warning ml-2">+{signal.impact}%</span>
+            <div key={i} className="flex items-center justify-between rounded p-3 bg-background/40 border border-border/30">
+              <span className="text-xs text-foreground/85">{signal.text}</span>
+              <span className="text-xs font-semibold text-cyber-warning ml-4">+{signal.impact}%</span>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="rounded-lg bg-cyber-cyan/10 border border-cyber-cyan/30 p-4">
+      <div className="rounded-lg bg-cyber-cyan/5 border border-cyber-cyan/30 p-4 mb-4">
         <p className="text-xs font-semibold text-cyber-cyan mb-2">What you should do</p>
-        <p className="text-xs text-foreground/80">{action}</p>
+        <p className="text-xs text-foreground/80 leading-relaxed">{action}</p>
       </div>
 
       <button
         onClick={onDismiss}
-        className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-border/60 bg-card/60 hover:bg-card transition-colors"
+        className="w-full px-3 py-2 text-xs font-semibold rounded-lg border border-border/40 bg-background/40 hover:bg-background/60 transition-colors text-muted-foreground"
       >
         Dismiss
       </button>
