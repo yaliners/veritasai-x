@@ -7,7 +7,7 @@ import { useThreats, exportThreatsCSV, downloadCSV } from "@/lib/veritas/store";
 import { Search, Download, X, Brain, KeyRound, AlertTriangle, ShieldCheck, ChevronDown } from "lucide-react";
 import type { ThreatRecord, Risk } from "@/lib/veritas/types";
 
-export const Route = createFileRoute("/threats")({
+export const Route = createFileRoute("/dashboard/threats")({
   head: () => ({
     meta: [
       { title: "Threat Intelligence — VeritasAI X" },

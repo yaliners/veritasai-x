@@ -4,7 +4,7 @@ import { useSettings, clearAll } from "@/lib/veritas/store";
 import { Save, Trash2, RotateCcw, ShieldOff } from "lucide-react";
 import type { SecuritySettings } from "@/lib/veritas/types";
 
-export const Route = createFileRoute("/settings")({
+export const Route = createFileRoute("/dashboard/settings")({
   head: () => ({
     meta: [
       { title: "Settings — VeritasAI X" },

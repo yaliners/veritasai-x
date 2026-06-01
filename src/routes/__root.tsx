@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
 } from "@tanstack/react-router";
 
 import { AppSidebar } from "@/components/veritas/app-sidebar";
@@ -73,11 +74,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const isLandingPage = path === "/";
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen w-full">
-        <AppSidebar />
+        {!isLandingPage && <AppSidebar />}
         <div className="flex min-w-0 flex-1 flex-col">
           <Outlet />
         </div>
