@@ -21,7 +21,7 @@ export function EmptyState() {
       <h3 className="text-lg font-semibold text-foreground mb-2">No scan data yet</h3>
 
       <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
-        Install the VeritasAI extension and browse some websites to see real threat data here
+        Install the VeritasShield AI extension and browse some websites to see real threat data here
       </p>
 
       <div className="flex flex-col items-center gap-2">

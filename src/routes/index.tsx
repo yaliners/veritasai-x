@@ -4,7 +4,7 @@ import { Shield, ShieldCheck, Brain, Zap } from "lucide-react";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "VeritasAI — Real-time Browser Security" },
+      { title: "VeritasShield AI — Real-time Browser Security" },
       { name: "description", content: "AI-powered protection from phishing, scams, and malicious content." },
     ],
   }),
@@ -30,13 +30,13 @@ function LandingPage() {
             <Shield className="h-6 w-6 text-background" />
             <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cyber-success" />
           </div>
-          <span className="ml-3 text-xl font-bold tracking-tight text-foreground">VeritasAI</span>
+          <span className="ml-3 text-xl font-bold tracking-tight text-foreground">VeritasShield AI</span>
         </div>
 
         {/* Hero Section */}
         <div className="mb-20 text-center">
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-foreground mb-6">
-            VeritasAI
+            VeritasShield AI
           </h1>
           <p className="text-xl sm:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Real-time AI threat protection for your browser

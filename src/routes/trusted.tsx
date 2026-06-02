@@ -8,7 +8,7 @@ import type { TrustedSite } from "@/lib/veritas/types";
 export const Route = createFileRoute("/trusted")({
   head: () => ({
     meta: [
-      { title: "Trusted Sites — VeritasAI X" },
+      { title: "Trusted Sites — VeritasShield AI" },
       { name: "description", content: "Manage whitelisted domains that bypass scanning." },
     ],
   }),

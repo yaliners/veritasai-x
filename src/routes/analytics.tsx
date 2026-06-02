@@ -12,7 +12,7 @@ import {
 export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
-      { title: "Analytics — VeritasAI X" },
+      { title: "Analytics — VeritasShield AI" },
       { name: "description", content: "AI-driven threat analytics, distributions, and trust trends." },
     ],
   }),

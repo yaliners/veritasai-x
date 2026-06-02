@@ -19,7 +19,7 @@ import {
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Security Center — VeritasAI X" },
+      { title: "Security Center — VeritasShield AI" },
       { name: "description", content: "Real-time SOC dashboard for AI-powered browser threat detection." },
     ],
   }),

@@ -28,7 +28,7 @@ export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notif
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border/60 bg-background/70 px-4 py-4 backdrop-blur-xl lg:px-8">
       <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">VeritasAI X</p>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">VeritasShield AI</p>
         <h1 className="text-xl font-bold tracking-tight">{title}</h1>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>

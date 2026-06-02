@@ -7,7 +7,7 @@ import type { SecuritySettings } from "@/lib/veritas/types";
 export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
-      { title: "Settings — VeritasAI X" },
+      { title: "Settings — VeritasShield AI" },
       { name: "description", content: "Configure detection modules, alerts, and storage." },
     ],
   }),

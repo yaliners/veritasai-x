@@ -10,7 +10,7 @@ import type { ThreatRecord, Risk } from "@/lib/veritas/types";
 export const Route = createFileRoute("/threats")({
   head: () => ({
     meta: [
-      { title: "Threat Intelligence — VeritasAI X" },
+      { title: "Threat Intelligence — VeritasShield AI" },
       { name: "description", content: "Searchable threat database with explainable AI insights and severity scoring." },
     ],
   }),

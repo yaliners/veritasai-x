@@ -21,7 +21,7 @@ export function AppSidebar() {
           <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cyber-success pulse-dot" />
         </div>
         <div>
-          <p className="text-sm font-bold tracking-tight">VeritasAI X</p>
+          <p className="text-sm font-bold tracking-tight">VeritasShield AI</p>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">v1.0.0 · SOC</p>
         </div>
       </div>
