@@ -67,7 +67,16 @@ function ThreatCenter() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
-    return threats
+    const sortedByTime = [...threats].sort((a, b) => b.timestamp - a.timestamp);
+    const unique: typeof sortedByTime = [];
+    for (const item of sortedByTime) {
+      const prev = unique.find(x => x.domain === item.domain);
+      if (!prev || item.risk !== prev.risk || Math.abs(item.timestamp - prev.timestamp) > 60000) {
+        unique.push(item);
+      }
+    }
+
+    return unique
       .filter((t) => (filter === "ALL" ? true : t.risk === filter))
       .filter((t) => t.domain.toLowerCase().includes(query.toLowerCase()) || t.module.toLowerCase().includes(query.toLowerCase()))
       .sort((a, b) => b.score - a.score);

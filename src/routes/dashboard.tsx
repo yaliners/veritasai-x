@@ -162,7 +162,15 @@ function SecurityCenter() {
   }, [filteredThreats]);
 
   const recent = useMemo(() => {
-    return [...filteredThreats].sort((a, b) => b.timestamp - a.timestamp).slice(0, 10);
+    const sorted = [...filteredThreats].sort((a, b) => b.timestamp - a.timestamp);
+    const unique: typeof sorted = [];
+    for (const item of sorted) {
+      const prev = unique[unique.length - 1];
+      if (!prev || item.domain !== prev.domain || item.risk !== prev.risk || Math.abs(item.timestamp - prev.timestamp) > 60000) {
+        unique.push(item);
+      }
+    }
+    return unique.slice(0, 10);
   }, [filteredThreats]);
 
   return (
