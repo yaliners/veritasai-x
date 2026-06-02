@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 
 const nav = [
   { to: "/dashboard", label: "Security Center", icon: LayoutDashboard },
-  { to: "/dashboard/threats", label: "Threat Intelligence", icon: Radar },
-  { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/dashboard/trusted", label: "Trusted Sites", icon: ListChecks },
-  { to: "/dashboard/settings", label: "Settings", icon: Settings },
+  { to: "/threats", label: "Threat Intelligence", icon: Radar },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/trusted", label: "Trusted Sites", icon: ListChecks },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppSidebar() {

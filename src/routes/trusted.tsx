@@ -5,7 +5,7 @@ import { useTrustedSites } from "@/lib/veritas/store";
 import { Plus, Search, Trash2, ShieldCheck } from "lucide-react";
 import type { TrustedSite } from "@/lib/veritas/types";
 
-export const Route = createFileRoute("/dashboard/trusted")({
+export const Route = createFileRoute("/trusted")({
   head: () => ({
     meta: [
       { title: "Trusted Sites — VeritasAI X" },

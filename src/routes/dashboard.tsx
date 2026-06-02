@@ -261,7 +261,7 @@ function SecurityCenter() {
               <h2 className="text-base font-semibold flex items-center gap-2"><Activity className="h-4 w-4 text-cyber-cyan" /> Live Threat Feed</h2>
               <p className="text-xs text-muted-foreground">Streaming detections from edge agents</p>
             </div>
-            <Link to="/dashboard/threats" className="text-xs font-semibold text-cyber-cyan inline-flex items-center gap-1 hover:underline">
+            <Link to="/threats" className="text-xs font-semibold text-cyber-cyan inline-flex items-center gap-1 hover:underline">
               Open Intel Center <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>

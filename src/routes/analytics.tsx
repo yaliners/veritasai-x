@@ -9,7 +9,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
 } from "recharts";
 
-export const Route = createFileRoute("/dashboard/analytics")({
+export const Route = createFileRoute("/analytics")({
   head: () => ({
     meta: [
       { title: "Analytics — VeritasAI X" },
