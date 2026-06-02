@@ -19,20 +19,31 @@ function autoCategorize(inputDomain: string): string {
   const clean = inputDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
   if (!clean) return "General";
   
-  if (clean.endsWith(".edu")) return "Education";
-  if (clean.endsWith(".gov")) return "Government";
-  
-  const infrastructure = ["google", "microsoft", "apple", "aws", "azure", "cloudflare", "amazon"];
-  const finance = ["stripe", "paypal", "bank", "visa", "mastercard", "coinbase", "chase", "fidelity"];
-  const dev = ["github", "gitlab", "npm", "vercel", "netlify", "stackoverflow", "jira", "bitbucket", "git"];
-  const ai = ["openai", "anthropic", "cohere", "gemini", "huggingface", "claude", "chatgpt"];
-  const reference = ["wikipedia", "britannica", "dictionary", "thesaurus", "wiki"];
+  if (clean.endsWith(".edu") || clean.endsWith(".ac.in") || clean.endsWith(".edu.in") || ["school", "college", "university", "lms", "saveetha", "canvas", "blackboard", "moodle", "coursera", "udemy", "edx", "khanacademy"].some(x => clean.includes(x))) return "Education";
+  if (clean.endsWith(".gov") || clean.endsWith(".gov.in") || clean.endsWith(".nic.in") || ["government", "gov", "state", "federal", "national", "admin"].some(x => clean.includes(x))) return "Government";
+  if (clean.endsWith(".org") || ["charity", "nonprofit", "ngo", "foundation", "redcross", "unicef"].some(x => clean.includes(x))) return "Non-Profit / Organization";
+
+  const infrastructure = ["google", "microsoft", "apple", "aws", "azure", "cloudflare", "oracle", "digitalocean", "heroku", "linode", "vultr", "godaddy", "namecheap", "dns", "host"];
+  const finance = ["stripe", "paypal", "bank", "visa", "mastercard", "coinbase", "chase", "fidelity", "hsbc", "wellsfargo", "citi", "capitalone", "barclays", "crypto", "binance", "robinhood", "venmo", "transferwise", "wise"];
+  const dev = ["github", "gitlab", "npm", "vercel", "netlify", "stackoverflow", "jira", "bitbucket", "git", "docker", "kubernetes", "pnpm", "bun", "vite", "deno", "postman", "sentry", "datadog", "figma", "codepen", "codesandbox"];
+  const ai = ["openai", "anthropic", "cohere", "gemini", "huggingface", "claude", "chatgpt", "perplexity", "midjourney", "runway", "elevenlabs", "copilot"];
+  const reference = ["wikipedia", "britannica", "dictionary", "thesaurus", "wiki", "quora", "medium", "reddit", "stackexchange", "mdn", "w3schools"];
+  const social = ["facebook", "instagram", "twitter", "x.com", "linkedin", "tiktok", "pinterest", "whatsapp", "telegram", "snapchat", "messenger", "discord", "slack", "zoom", "teams"];
+  const entertainment = ["netflix", "spotify", "youtube", "disney", "hulu", "twitch", "hbo", "primevideo", "audible", "vimeo", "soundcloud", "crunchyroll"];
+  const ecommerce = ["amazon", "ebay", "shopify", "walmart", "target", "aliexpress", "etsy", "bestbuy", "temu", "flipkart", "alibaba", "ikea", "costco"];
+  const news = ["nytimes", "cnn", "bbc", "reuters", "bloomberg", "wsj", "forbes", "guardian", "huffpost", "techcrunch", "wired", "theverge", "cnet"];
+  const travel = ["airbnb", "booking", "expedia", "tripadvisor", "uber", "lyft", "grab", "trip", "kayak", "flight"];
   
   if (infrastructure.some(x => clean.includes(x))) return "Infrastructure";
   if (finance.some(x => clean.includes(x))) return "Finance";
   if (dev.some(x => clean.includes(x))) return "Development";
   if (ai.some(x => clean.includes(x))) return "AI";
   if (reference.some(x => clean.includes(x))) return "Reference";
+  if (social.some(x => clean.includes(x))) return "Social Media";
+  if (entertainment.some(x => clean.includes(x))) return "Entertainment";
+  if (ecommerce.some(x => clean.includes(x))) return "E-Commerce";
+  if (news.some(x => clean.includes(x))) return "News";
+  if (travel.some(x => clean.includes(x))) return "Travel";
   
   return "General";
 }
