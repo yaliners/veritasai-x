@@ -15,10 +15,33 @@ export const Route = createFileRoute("/trusted")({
   component: TrustedManager,
 });
 
+function autoCategorize(inputDomain: string): string {
+  const clean = inputDomain.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  if (!clean) return "General";
+  
+  if (clean.endsWith(".edu")) return "Education";
+  if (clean.endsWith(".gov")) return "Government";
+  
+  const infrastructure = ["google", "microsoft", "apple", "aws", "azure", "cloudflare", "amazon"];
+  const finance = ["stripe", "paypal", "bank", "visa", "mastercard", "coinbase", "chase", "fidelity"];
+  const dev = ["github", "gitlab", "npm", "vercel", "netlify", "stackoverflow", "jira", "bitbucket", "git"];
+  const ai = ["openai", "anthropic", "cohere", "gemini", "huggingface", "claude", "chatgpt"];
+  const reference = ["wikipedia", "britannica", "dictionary", "thesaurus", "wiki"];
+  
+  if (infrastructure.some(x => clean.includes(x))) return "Infrastructure";
+  if (finance.some(x => clean.includes(x))) return "Finance";
+  if (dev.some(x => clean.includes(x))) return "Development";
+  if (ai.some(x => clean.includes(x))) return "AI";
+  if (reference.some(x => clean.includes(x))) return "Reference";
+  
+  return "General";
+}
+
 function TrustedManager() {
   const [sites, setSites] = useTrustedSites();
   const [domain, setDomain] = useState("");
   const [category, setCategory] = useState("General");
+  const [isManualCategory, setIsManualCategory] = useState(false);
   const [level, setLevel] = useState<TrustedSite["trustLevel"]>("Standard");
   const [query, setQuery] = useState("");
 
@@ -27,11 +50,25 @@ function TrustedManager() {
     [sites, query],
   );
 
+  const handleDomainChange = (val: string) => {
+    setDomain(val);
+    if (!isManualCategory) {
+      setCategory(autoCategorize(val));
+    }
+  };
+
+  const handleCategoryChange = (val: string) => {
+    setCategory(val);
+    setIsManualCategory(true);
+  };
+
   function add() {
     const clean = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     if (!clean) return;
     setSites([{ id: `t_${Date.now()}`, domain: clean, category, trustLevel: level, addedAt: Date.now() }, ...sites]);
     setDomain("");
+    setCategory("General");
+    setIsManualCategory(false);
   }
 
   function remove(id: string) {
@@ -52,8 +89,8 @@ function TrustedManager() {
           <h2 className="mb-1 text-base font-semibold">Add Trusted Domain</h2>
           <p className="mb-4 text-xs text-muted-foreground">Domains added here become Risk: TRUSTED · Score: 0 · Trust: 100.</p>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[2fr_1fr_1fr_auto]">
-            <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="example.com" className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan" />
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category" className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan" />
+            <input value={domain} onChange={(e) => handleDomainChange(e.target.value)} placeholder="example.com" className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan" />
+            <input value={category} onChange={(e) => handleCategoryChange(e.target.value)} placeholder="Category" className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan" />
             <select value={level} onChange={(e) => setLevel(e.target.value as TrustedSite["trustLevel"])} className="rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm">
               <option value="Standard">Standard</option>
               <option value="High">High</option>
