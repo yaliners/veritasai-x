@@ -111,5 +111,5 @@ function updateStatsBar(history) {
 }
 
 document.getElementById("openDash").addEventListener("click", () => {
-  chrome.tabs.create({ url: "https://veritasai-x.vercel.app/dashboard" });
+  chrome.tabs.create({ url: "https://veritasai-shield.vercel.app/dashboard" });
 });

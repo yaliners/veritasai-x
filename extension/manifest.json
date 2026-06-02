@@ -13,7 +13,7 @@
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
-      "matches": ["https://veritasai-x.vercel.app/*", "http://*/*", "https://*/*"],
+      "matches": ["https://veritasai-shield.vercel.app/*", "http://*/*", "https://*/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
