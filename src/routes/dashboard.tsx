@@ -32,7 +32,7 @@ function SecurityCenter() {
   const [lastNotified, setLastNotified] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateFromLocalStorage = () => {
       try {
         const extData = localStorage.getItem("veritasai_scans");
         if (extData) {
@@ -66,9 +66,21 @@ function SecurityCenter() {
       } catch {
         // Silently fail if parsing fails
       }
-    }, 5000);
+    };
 
-    return () => clearInterval(interval);
+    // Initial load
+    updateFromLocalStorage();
+
+    // Event listener for immediate updates
+    window.addEventListener("storage", updateFromLocalStorage);
+
+    // Poll as fallback
+    const interval = setInterval(updateFromLocalStorage, 5000);
+
+    return () => {
+      window.removeEventListener("storage", updateFromLocalStorage);
+      clearInterval(interval);
+    };
   }, [updateThreats]);
 
   const stats = useMemo(() => {

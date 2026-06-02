@@ -14,8 +14,8 @@ export const Route = createFileRoute("/")({
 function LandingPage() {
   const handleDownload = () => {
     const link = document.createElement("a");
-    link.href = "/veritas-extension.zip";
-    link.download = "veritas-extension.zip";
+    link.href = "/veritasai-extension.zip";
+    link.download = "veritasai-extension.zip";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -26,9 +26,9 @@ function LandingPage() {
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="mb-16 flex items-center justify-center">
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyber-cyan to-primary shadow-[var(--shadow-glow)]">
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyber-cyan to-primary">
             <Shield className="h-6 w-6 text-background" />
-            <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-cyber-success pulse-dot" />
+            <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cyber-success" />
           </div>
           <span className="ml-3 text-xl font-bold tracking-tight text-foreground">VeritasAI</span>
         </div>
@@ -66,19 +66,24 @@ function LandingPage() {
         </div>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <button
-            onClick={handleDownload}
-            className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary text-background font-semibold shadow-lg hover:shadow-cyber-cyan/40 transition-all hover:scale-[1.02]"
-          >
-            Download Extension
-          </button>
-          <Link
-            to="/dashboard"
-            className="px-8 py-3 rounded-lg border border-border/60 bg-card/40 text-foreground font-semibold hover:bg-card/60 transition-colors"
-          >
-            Open Dashboard
-          </Link>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <button
+              onClick={handleDownload}
+              className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary text-background font-semibold shadow-md hover:opacity-90"
+            >
+              Download Extension
+            </button>
+            <Link
+              to="/dashboard"
+              className="px-8 py-3 rounded-lg border border-border/60 bg-card/40 text-foreground font-semibold hover:bg-card/60"
+            >
+              Open Dashboard
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Chrome extension • Manifest V3 • Free
+          </p>
         </div>
 
         {/* Footer Text */}

@@ -61,14 +61,55 @@ function render(r) {
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = tabs[0]?.url || "about:blank";
+  let host = "about:blank";
+  try { host = new URL(url).hostname; } catch {}
+
   const result = classify(url);
   render(result);
-  chrome.storage.local.get(["history"], ({ history = [] }) => {
-    const next = [{ ...result, url, ts: Date.now() }, ...history].slice(0, 100);
-    chrome.storage.local.set({ history: next });
-  });
+
+  // If this is a real web page, add it to scanHistory (unless already added by content script)
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
+      // Avoid duplicate entries for the same URL in a small time window
+      const alreadyLogged = scanHistory.length > 0 && (scanHistory[0].url === url && Date.now() - scanHistory[0].time < 2000);
+      
+      let nextHistory = scanHistory;
+      if (!alreadyLogged) {
+        const scanResult = {
+          url: url,
+          domain: host,
+          risk: result.risk,
+          score: result.score,
+          trustScore: result.trust,
+          aiPrediction: result.risk === "DANGEROUS" ? "Malicious" : result.risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
+          mlRisk: (result.score / 100).toFixed(2),
+          time: Date.now(),
+        };
+        nextHistory = [scanResult, ...scanHistory].slice(0, 50);
+        chrome.storage.local.set({ scanHistory: nextHistory });
+      }
+
+      // Update the stats bar with the latest numbers
+      updateStatsBar(nextHistory);
+    });
+  } else {
+    // If not a web page, still load and display the stats bar
+    chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
+      updateStatsBar(scanHistory);
+    });
+  }
 });
 
+function updateStatsBar(history) {
+  const total = history.length;
+  const blocked = history.filter(x => x.risk === "DANGEROUS").length;
+  const safe = history.filter(x => x.risk === "SAFE").length;
+
+  document.getElementById("totalScanned").textContent = total;
+  document.getElementById("threatsBlocked").textContent = blocked;
+  document.getElementById("safeSites").textContent = safe;
+}
+
 document.getElementById("openDash").addEventListener("click", () => {
-  chrome.tabs.create({ url: "https://veritasai-x.vercel.app" });
+  chrome.tabs.create({ url: "https://veritasai-x.vercel.app/dashboard" });
 });

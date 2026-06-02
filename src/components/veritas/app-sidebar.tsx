@@ -53,13 +53,16 @@ export function AppSidebar() {
         <p className="text-xs font-semibold">Chrome Extension</p>
         <p className="mt-1 text-[11px] text-muted-foreground">Deploy real-time browser protection.</p>
         <a
-          href="/veritas-extension.zip"
+          href="/veritasai-extension.zip"
           download
           className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-3 py-2 text-xs font-semibold text-background transition-transform hover:scale-[1.02]"
         >
           <Download className="h-3.5 w-3.5" />
           Download .zip
         </a>
+        <p className="mt-2 text-[9px] text-center text-muted-foreground">
+          Chrome extension • Manifest V3 • Free
+        </p>
       </div>
     </aside>
   );

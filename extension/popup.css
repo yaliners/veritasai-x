@@ -72,3 +72,43 @@ body {
   letter-spacing: 0.05em;
 }
 .cta:hover { transform: translateY(-1px); }
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #081225;
+  border: 1px solid rgba(60, 80, 120, 0.4);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(60, 80, 120, 0.3);
+}
+.stat-box:last-child {
+  border-right: none;
+}
+.stat-val {
+  font-size: 16px;
+  font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
+.stat-val.danger {
+  color: #ef4444;
+}
+.stat-val.success {
+  color: #22c55e;
+}
+.stat-lbl {
+  font-size: 8px;
+  color: #6b7a99;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 2px;
+}

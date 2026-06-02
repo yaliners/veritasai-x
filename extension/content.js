@@ -1,5 +1,5 @@
 (function () {
-  if (location.hostname.includes("veritasai-x.vercel.app")) {
+  if (window.location.href.includes("veritasai-x.vercel.app")) {
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
       localStorage.setItem("veritasai_scans", JSON.stringify(scanHistory));
       window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(scanHistory) }));

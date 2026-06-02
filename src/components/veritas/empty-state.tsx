@@ -3,8 +3,8 @@ import { Download } from "lucide-react";
 export function EmptyState() {
   const handleDownload = () => {
     const link = document.createElement("a");
-    link.href = "/veritas-extension.zip";
-    link.download = "veritas-extension.zip";
+    link.href = "/veritasai-extension.zip";
+    link.download = "veritasai-extension.zip";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -24,13 +24,18 @@ export function EmptyState() {
         Install the VeritasAI extension and browse some websites to see real threat data here
       </p>
 
-      <button
-        onClick={handleDownload}
-        className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-cyan/80 px-4 py-2 text-sm font-semibold text-cyber-dark hover:shadow-lg hover:shadow-cyber-cyan/40 transition-shadow"
-      >
-        <Download className="h-4 w-4" />
-        Download Extension
-      </button>
+      <div className="flex flex-col items-center gap-2">
+        <button
+          onClick={handleDownload}
+          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-cyan/80 px-4 py-2 text-sm font-semibold text-cyber-dark hover:shadow-lg hover:shadow-cyber-cyan/40 transition-shadow"
+        >
+          <Download className="h-4 w-4" />
+          Download Extension
+        </button>
+        <p className="text-[10px] text-muted-foreground">
+          Chrome extension • Manifest V3 • Free
+        </p>
+      </div>
     </div>
   );
 }

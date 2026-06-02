@@ -248,7 +248,7 @@ function ExplanationPanel({ threat, onDismiss }: { threat: ThreatRecord; onDismi
       </div>
 
       <div className="rounded-lg bg-cyber-cyan/5 border border-cyber-cyan/30 p-4 mb-4">
-        <p className="text-xs font-semibold text-cyber-cyan mb-2">What you should do</p>
+        <p className="text-xs font-semibold text-cyber-cyan mb-2">What to do</p>
         <p className="text-xs text-foreground/80 leading-relaxed">{action}</p>
       </div>
 
