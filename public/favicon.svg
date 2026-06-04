@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D8FF" />
+      <stop offset="100%" stop-color="#7C3AED" />
+    </linearGradient>
+  </defs>
+  <!-- Outer Shield Shadow / Border -->
+  <path d="M16 2 L28 6 V15 C28 22.5 22.8 28.5 16 30 C9.2 28.5 4 22.5 4 15 V6 Z" fill="url(#shieldGrad)" />
+  <!-- Inner Shield Core -->
+  <path d="M16 4.5 L26 7.5 V15 C26 21 21.5 26.5 16 28 C10.5 26.5 6 21.5 6 15 V7.5 Z" fill="#020817" />
+  <!-- Cyber Security Shield Core Checkmark -->
+  <path d="M13.5 17 L10.5 14 L9 15.5 L13.5 20 L23 10.5 L21.5 9 Z" fill="#00D8FF" />
+</svg>

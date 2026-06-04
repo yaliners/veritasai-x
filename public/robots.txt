@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /analytics
+Disallow: /settings
+Disallow: /threats
+Disallow: /trusted
+
+Sitemap: https://veritasai-shield.vercel.app/sitemap.xml
