@@ -30,6 +30,17 @@ function SecurityCenter() {
   const [threats, updateThreats] = useThreats();
   const [searchQuery, setSearchQuery] = useState("");
   const [lastNotified, setLastNotified] = useState<Set<string>>(new Set());
+  const [isExtensionInstalled, setIsExtensionInstalled] = useState(true);
+
+  useEffect(() => {
+    const check = () => {
+      const active = document.documentElement.dataset.veritasShieldInstalled === "true";
+      setIsExtensionInstalled(active);
+    };
+    check();
+    const timer = setTimeout(check, 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const updateFromLocalStorage = () => {
@@ -188,7 +199,7 @@ function SecurityCenter() {
         }))}
       />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
-        {threats.length === 0 ? (
+        {threats.length === 0 || !isExtensionInstalled ? (
           <EmptyState />
         ) : searchQuery && filteredThreats.length === 0 ? (
           <div className="rounded-2xl border border-cyber-cyan/30 bg-cyber-cyan/5 p-6 text-center">
@@ -196,7 +207,7 @@ function SecurityCenter() {
             <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
           </div>
         ) : null}
-        {threats.length > 0 && (
+        {threats.length > 0 && isExtensionInstalled && (
           <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Total Scans" value={stats.total} icon={ShieldAlert} accent="danger" hint="Scans analyzed" />
             <StatCard label="Dangerous" value={stats.dangerous} icon={ShieldAlert} accent="danger" hint="High-risk detections" />
@@ -205,7 +216,7 @@ function SecurityCenter() {
           </section>
         )}
 
-        {threats.length > 0 && (
+        {threats.length > 0 && isExtensionInstalled && (
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           <div className="glass rounded-2xl p-6 xl:col-span-2 shadow-[var(--shadow-card)]">
             <div className="mb-4 flex items-center justify-between">
@@ -262,7 +273,7 @@ function SecurityCenter() {
         </section>
         )}
 
-        {threats.length > 0 && (
+        {threats.length > 0 && isExtensionInstalled && (
         <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
           <div className="mb-4 flex items-center justify-between">
             <div>

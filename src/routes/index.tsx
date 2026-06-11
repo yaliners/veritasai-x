@@ -68,12 +68,12 @@ function LandingPage() {
         {/* CTA Buttons */}
         <div className="flex flex-col items-center justify-center gap-4">
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <button
-              onClick={handleDownload}
-              className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary text-background font-semibold shadow-md hover:opacity-90"
+            <Link
+              to="/setup"
+              className="px-8 py-3 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary text-background font-semibold shadow-md hover:opacity-90 text-center"
             >
-              Download Extension
-            </button>
+              Get Started / Setup
+            </Link>
             <Link
               to="/dashboard"
               className="px-8 py-3 rounded-lg border border-border/60 bg-card/40 text-foreground font-semibold hover:bg-card/60"
