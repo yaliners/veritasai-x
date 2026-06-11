@@ -18,6 +18,18 @@
     } catch (e) {
       console.error("VeritasShield: Settings sync failed", e);
     }
+
+    // Sync trusted domains from webpage to extension
+    try {
+      const localTrusted = localStorage.getItem("veritas:trusted");
+      if (localTrusted) {
+        const parsed = JSON.parse(localTrusted);
+        const domains = parsed.map(x => x.domain.toLowerCase());
+        chrome.storage.local.set({ trustedDomains: domains });
+      }
+    } catch (e) {
+      console.error("VeritasShield: Trusted domains sync failed", e);
+    }
     return;
   }
 
@@ -33,12 +45,19 @@
   };
 
   // Read settings and execute edge scans accordingly
-  chrome.storage.local.get(["settings"], ({ settings = DEFAULT_SETTINGS }) => {
+  chrome.storage.local.get(["settings", "trustedDomains"], ({ settings = DEFAULT_SETTINGS, trustedDomains = [] }) => {
     const modules = settings?.modules || DEFAULT_SETTINGS.modules;
     const controls = settings?.controls || DEFAULT_SETTINGS.controls;
 
     // 1. Respect Auto Scan (System Control)
     if (!controls.autoScan) {
+      return; 
+    }
+
+    // 2. Bypass scanning for whitelisted trusted domains
+    let host = ""; try { host = new URL(url).hostname.toLowerCase(); } catch {}
+    const isWhitelisted = trustedDomains.some((d) => host === d || host.endsWith("." + d));
+    if (isWhitelisted) {
       return; 
     }
 
