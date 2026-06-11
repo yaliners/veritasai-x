@@ -7,42 +7,102 @@
       localStorage.setItem("veritasai_scans", JSON.stringify(scanHistory));
       window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(scanHistory) }));
     });
+
+    // Sync settings from webpage to extension
+    try {
+      const localSettings = localStorage.getItem("veritas:settings");
+      if (localSettings) {
+        const parsed = JSON.parse(localSettings);
+        chrome.storage.local.set({ settings: parsed });
+      }
+    } catch (e) {
+      console.error("VeritasShield: Settings sync failed", e);
+    }
     return;
   }
 
   const url = location.href;
   const PHISHING = ["login", "verify", "bank", "password", "otp", "suspended"];
   const SCAM = ["giveaway", "claim reward", "send bitcoin", "wire transfer", "gift card"];
-  const text = document.body ? document.body.innerText.toLowerCase() : "";
-  let score = 0;
-  const reasons = [];
-  PHISHING.forEach((k) => { if (url.toLowerCase().includes(k)) { score += 20; reasons.push("Phishing keyword: " + k); } });
-  SCAM.forEach((k) => { if (text.includes(k)) { score += 25; reasons.push("Scam phrase: " + k); } });
-  if (document.querySelector('input[type="password"]') && !location.protocol.includes("https")) { score += 30; reasons.push("Password field on insecure page"); }
+  const DARK = ["limited-time", "act-now", "ends-in", "only-today", "flash-sale"];
 
-  const scanResult = {
-    url: url,
-    domain: new URL(url).hostname,
-    risk: score >= 85 ? "DANGEROUS" : score >= 50 ? "SUSPICIOUS" : "SAFE",
-    score: Math.min(100, score),
-    trustScore: Math.max(0, 100 - score),
-    aiPrediction: score >= 85 ? "Malicious" : score >= 50 ? "Suspicious" : "Benign",
-    mlRisk: (Math.min(100, score) / 100).toFixed(2),
-    time: Date.now(),
+  // Default configuration
+  const DEFAULT_SETTINGS = {
+    modules: { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false },
+    controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
   };
 
-  chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
-    const updated = [scanResult, ...scanHistory].slice(0, 50);
-    chrome.storage.local.set({ scanHistory: updated });
-    localStorage.setItem("veritasai_scans", JSON.stringify(updated));
-  });
+  // Read settings and execute edge scans accordingly
+  chrome.storage.local.get(["settings"], ({ settings = DEFAULT_SETTINGS }) => {
+    const modules = settings?.modules || DEFAULT_SETTINGS.modules;
+    const controls = settings?.controls || DEFAULT_SETTINGS.controls;
 
-  if (score >= 65) {
-    chrome.storage.local.get(["settings"], ({ settings = { overlay: true } }) => {
-      if (!settings.overlay) return;
-      showOverlay(score, reasons);
+    // 1. Respect Auto Scan (System Control)
+    if (!controls.autoScan) {
+      return; 
+    }
+
+    const text = document.body ? document.body.innerText.toLowerCase() : "";
+    let score = 0;
+    const reasons = [];
+
+    // 2. Respect Phishing Detector (Security Module)
+    if (modules.phishing) {
+      PHISHING.forEach((k) => { 
+        if (url.toLowerCase().includes(k)) { 
+          score += 20; 
+          reasons.push("Phishing keyword: " + k); 
+        } 
+      });
+      if (document.querySelector('input[type="password"]') && !location.protocol.includes("https")) { 
+        score += 30; 
+        reasons.push("Password field on insecure page"); 
+      }
+    }
+
+    // 3. Respect Scam Detector (Security Module)
+    if (modules.scam) {
+      SCAM.forEach((k) => { 
+        if (text.includes(k)) { 
+          score += 25; 
+          reasons.push("Scam phrase: " + k); 
+        } 
+      });
+    }
+
+    // 4. Respect Dark Pattern Detector (Security Module)
+    if (modules.darkPattern) {
+      DARK.forEach((k) => {
+        if (text.includes(k)) {
+          score += 15;
+          reasons.push("Urgency dark pattern: " + k);
+        }
+      });
+    }
+
+    // Heuristics mapping for visual feedback in score
+    const scanResult = {
+      url: url,
+      domain: new URL(url).hostname,
+      risk: score >= 85 ? "DANGEROUS" : score >= 50 ? "SUSPICIOUS" : "SAFE",
+      score: Math.min(100, score),
+      trustScore: Math.max(0, 100 - score),
+      aiPrediction: score >= 85 ? "Malicious" : score >= 50 ? "Suspicious" : "Benign",
+      mlRisk: (Math.min(100, score) / 100).toFixed(2),
+      time: Date.now(),
+    };
+
+    chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
+      const updated = [scanResult, ...scanHistory].slice(0, 50);
+      chrome.storage.local.set({ scanHistory: updated });
+      localStorage.setItem("veritasai_scans", JSON.stringify(updated));
     });
-  }
+
+    // 5. Respect Overlay Alerts (System Control)
+    if (score >= 65 && controls.overlayAlerts) {
+      showOverlay(score, reasons);
+    }
+  });
 
   function showOverlay(score, reasons) {
     if (document.getElementById("veritas-overlay")) return;

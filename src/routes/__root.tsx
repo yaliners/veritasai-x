@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-router";
 
 import { AppSidebar } from "@/components/veritas/app-sidebar";
+import { Toaster } from "sonner";
 
 function NotFoundComponent() {
   return (
@@ -85,6 +86,7 @@ function RootComponent() {
           <Outlet />
         </div>
       </div>
+      <Toaster position="bottom-right" richColors />
     </QueryClientProvider>
   );
 }

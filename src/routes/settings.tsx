@@ -4,6 +4,7 @@ import { Topbar } from "@/components/veritas/topbar";
 import { useSettings, clearAll } from "@/lib/veritas/store";
 import { Save, Trash2, RotateCcw, ShieldOff, Moon, Sun } from "lucide-react";
 import type { SecuritySettings } from "@/lib/veritas/types";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -41,6 +42,14 @@ function SettingsCenter() {
 
   function toggleControl(key: keyof SecuritySettings["controls"]) {
     setSettings({ ...settings, controls: { ...settings.controls, [key]: !settings.controls[key] } });
+  }
+
+  function handleSaveSettings() {
+    setSettings(settings);
+    toast.success("Settings saved successfully!", {
+      description: "Extension configuration has been synchronized.",
+      duration: 3000,
+    });
   }
 
   const moduleItems: Array<{ key: keyof SecuritySettings["modules"]; label: string; desc: string }> = [
@@ -115,16 +124,46 @@ function SettingsCenter() {
           <h2 className="text-base font-semibold">Data & Reset</h2>
           <p className="mb-4 text-xs text-muted-foreground">Destructive actions are irreversible.</p>
           <div className="flex flex-wrap gap-3">
-            <button className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-4 py-2 text-sm font-semibold text-background">
+            <button
+              onClick={handleSaveSettings}
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-4 py-2 text-sm font-semibold text-background transition-transform active:scale-95"
+            >
               <Save className="h-4 w-4" /> Save Settings
             </button>
-            <button onClick={() => { if (confirm("Clear threat history?")) { localStorage.removeItem("veritas:threats"); location.reload(); } }} className="inline-flex items-center gap-2 rounded-lg border border-cyber-warning/40 bg-cyber-warning/10 px-4 py-2 text-sm font-semibold text-cyber-warning">
+            <button
+              onClick={() => {
+                if (confirm("Clear threat history?")) {
+                  localStorage.removeItem("veritas:threats");
+                  toast.success("Threat history cleared successfully!");
+                  setTimeout(() => location.reload(), 800);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-cyber-warning/40 bg-cyber-warning/10 px-4 py-2 text-sm font-semibold text-cyber-warning transition-transform active:scale-95"
+            >
               <Trash2 className="h-4 w-4" /> Clear Threat History
             </button>
-            <button onClick={() => { if (confirm("Clear trusted domains?")) { localStorage.removeItem("veritas:trusted"); location.reload(); } }} className="inline-flex items-center gap-2 rounded-lg border border-cyber-warning/40 bg-cyber-warning/10 px-4 py-2 text-sm font-semibold text-cyber-warning">
+            <button
+              onClick={() => {
+                if (confirm("Clear trusted domains?")) {
+                  localStorage.removeItem("veritas:trusted");
+                  toast.success("Trusted domains cleared successfully!");
+                  setTimeout(() => location.reload(), 800);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-cyber-warning/40 bg-cyber-warning/10 px-4 py-2 text-sm font-semibold text-cyber-warning transition-transform active:scale-95"
+            >
               <ShieldOff className="h-4 w-4" /> Clear Trusted Domains
             </button>
-            <button onClick={() => { if (confirm("Reset entire extension?")) { clearAll(); location.reload(); } }} className="inline-flex items-center gap-2 rounded-lg border border-cyber-danger/40 bg-cyber-danger/10 px-4 py-2 text-sm font-semibold text-cyber-danger">
+            <button
+              onClick={() => {
+                if (confirm("Reset entire extension?")) {
+                  clearAll();
+                  toast.success("Settings and extension database reset successfully!");
+                  setTimeout(() => location.reload(), 800);
+                }
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-cyber-danger/40 bg-cyber-danger/10 px-4 py-2 text-sm font-semibold text-cyber-danger transition-transform active:scale-95"
+            >
               <RotateCcw className="h-4 w-4" /> Reset Extension
             </button>
           </div>
