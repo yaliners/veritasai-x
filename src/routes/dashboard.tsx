@@ -57,7 +57,9 @@ function SecurityCenter() {
             mlRisk: string;
             time: number;
           }>;
-          const converted = scans.map((s, i) => ({
+          const now = Date.now();
+          const presentScans = scans.filter(s => now - s.time < 24 * 60 * 60 * 1000);
+          const converted = presentScans.map((s, i) => ({
             id: `scan_${i}_${s.time}`,
             url: s.url,
             domain: s.domain,

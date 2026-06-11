@@ -71,7 +71,11 @@ function loadThreatsFromExtension(): ThreatRecord[] {
         mlRisk: string;
         time: number;
       }>;
-      return scans.map((s, i) => ({
+      // Filter: only show present data (last 24 hours)
+      const now = Date.now();
+      const presentScans = scans.filter(s => now - s.time < 24 * 60 * 60 * 1000);
+
+      return presentScans.map((s, i) => ({
         id: `scan_${i}_${s.time}`,
         url: s.url,
         domain: s.domain,
