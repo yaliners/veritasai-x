@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { useSettings, clearAll } from "@/lib/veritas/store";
-import { Save, Trash2, RotateCcw, ShieldOff } from "lucide-react";
+import { Save, Trash2, RotateCcw, ShieldOff, Moon, Sun } from "lucide-react";
 import type { SecuritySettings } from "@/lib/veritas/types";
 
 export const Route = createFileRoute("/settings")({
@@ -16,6 +17,23 @@ export const Route = createFileRoute("/settings")({
 
 function SettingsCenter() {
   const [settings, setSettings] = useSettings();
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const activeTheme = document.documentElement.classList.contains("light") ? "light" : "dark";
+    setTheme(activeTheme);
+  }, []);
+
+  const changeTheme = (mode: "dark" | "light") => {
+    setTheme(mode);
+    if (mode === "light") {
+      document.documentElement.classList.add("light");
+      localStorage.setItem("veritas_theme", "light");
+    } else {
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("veritas_theme", "dark");
+    }
+  };
 
   function toggleModule(key: keyof SecuritySettings["modules"]) {
     setSettings({ ...settings, modules: { ...settings.modules, [key]: !settings.modules[key] } });
@@ -61,6 +79,35 @@ function SettingsCenter() {
             {controlItems.map((m) => (
               <ToggleRow key={m.key} label={m.label} desc={m.desc} value={settings.controls[m.key]} onChange={() => toggleControl(m.key)} />
             ))}
+          </div>
+        </section>
+
+        <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
+          <h2 className="text-base font-semibold">Appearance Theme</h2>
+          <p className="mb-4 text-xs text-muted-foreground">Select your interface styling preference.</p>
+          <div className="flex flex-wrap gap-4">
+            <button
+              onClick={() => changeTheme("dark")}
+              className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-xs font-semibold transition-all ${
+                theme === "dark"
+                  ? "border-cyber-cyan bg-cyber-cyan/15 text-cyber-cyan shadow-[var(--shadow-glow)]"
+                  : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Moon className="h-4 w-4" />
+              Dark Cybersecurity (Default)
+            </button>
+            <button
+              onClick={() => changeTheme("light")}
+              className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-xs font-semibold transition-all ${
+                theme === "light"
+                  ? "border-primary bg-primary/15 text-primary"
+                  : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sun className="h-4 w-4" />
+              Light Tech Shield
+            </button>
           </div>
         </section>
 

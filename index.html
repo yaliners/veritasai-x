@@ -23,7 +23,17 @@
     <meta property="twitter:url" content="https://veritasai-shield.vercel.app/" />
     <meta property="twitter:title" content="VeritasShield AI – Real-time Browser Threat Protection" />
     <meta property="twitter:description" content="Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI. Your data never leaves your browser." />
-    <meta property="twitter:image" content="https://veritasai-shield.vercel.app/og-image.png" />
+    <!-- Theme Init Script -->
+    <script>
+      (function() {
+        const theme = localStorage.getItem("veritas_theme") || "dark";
+        if (theme === "light") {
+          document.documentElement.classList.add("light");
+        } else {
+          document.documentElement.classList.remove("light");
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app">

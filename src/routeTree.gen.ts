@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrustedRouteImport } from './routes/trusted'
 import { Route as ThreatsRouteImport } from './routes/threats'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -24,6 +25,11 @@ const TrustedRoute = TrustedRouteImport.update({
 const ThreatsRoute = ThreatsRouteImport.update({
   id: '/threats',
   path: '/threats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
   '/trusted': typeof TrustedRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
   '/trusted': typeof TrustedRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
   '/trusted': typeof TrustedRoute
 }
@@ -79,16 +88,25 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/dashboard'
     | '/settings'
+    | '/setup'
     | '/threats'
     | '/trusted'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/dashboard' | '/settings' | '/threats' | '/trusted'
+  to:
+    | '/'
+    | '/analytics'
+    | '/dashboard'
+    | '/settings'
+    | '/setup'
+    | '/threats'
+    | '/trusted'
   id:
     | '__root__'
     | '/'
     | '/analytics'
     | '/dashboard'
     | '/settings'
+    | '/setup'
     | '/threats'
     | '/trusted'
   fileRoutesById: FileRoutesById
@@ -98,6 +116,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   DashboardRoute: typeof DashboardRoute
   SettingsRoute: typeof SettingsRoute
+  SetupRoute: typeof SetupRoute
   ThreatsRoute: typeof ThreatsRoute
   TrustedRoute: typeof TrustedRoute
 }
@@ -116,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/threats'
       fullPath: '/threats'
       preLoaderRoute: typeof ThreatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -154,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   DashboardRoute: DashboardRoute,
   SettingsRoute: SettingsRoute,
+  SetupRoute: SetupRoute,
   ThreatsRoute: ThreatsRoute,
   TrustedRoute: TrustedRoute,
 }

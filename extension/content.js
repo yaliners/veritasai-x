@@ -1,5 +1,8 @@
 (function () {
-  if (window.location.href.includes("veritasai-shield.vercel.app")) {
+  const isVeritasSite = window.location.href.includes("veritasai-shield.vercel.app") || window.location.href.includes("localhost:") || window.location.href.includes("127.0.0.1:");
+
+  if (isVeritasSite) {
+    document.documentElement.dataset.veritasShieldInstalled = "true";
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
       localStorage.setItem("veritasai_scans", JSON.stringify(scanHistory));
       window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(scanHistory) }));
