@@ -23,21 +23,38 @@ function SetupPage() {
     const activeTheme = document.documentElement.classList.contains("light") ? "light" : "dark";
     setTheme(activeTheme);
     checkExtensionStatus();
+
+    const focusHandler = () => checkExtensionStatus();
+    window.addEventListener("focus", focusHandler);
+    return () => window.removeEventListener("focus", focusHandler);
   }, []);
 
-  const checkExtensionStatus = () => {
-    // Check if the dataset attribute is set by content.js
-    const isInstalled = document.documentElement.dataset.veritasShieldInstalled === "true";
-    setIsExtensionInstalled(isInstalled);
-    setChecked(true);
+  const checkExtensionStatus = (callback?: (active: boolean) => void) => {
+    let active = false;
+    const handlePong = () => {
+      active = true;
+      setIsExtensionInstalled(true);
+      setChecked(true);
+      callback?.(true);
+    };
+    window.addEventListener("veritas_pong", handlePong);
+    window.dispatchEvent(new CustomEvent("veritas_ping"));
+    
+    setTimeout(() => {
+      if (!active) {
+        setIsExtensionInstalled(false);
+        setChecked(true);
+        callback?.(false);
+      }
+      window.removeEventListener("veritas_pong", handlePong);
+    }, 250);
   };
 
   const handleVerify = () => {
     setVerificationLoading(true);
-    setTimeout(() => {
-      checkExtensionStatus();
+    checkExtensionStatus(() => {
       setVerificationLoading(false);
-    }, 1200);
+    });
   };
 
   const toggleTheme = (mode: "dark" | "light") => {

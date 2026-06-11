@@ -3,6 +3,14 @@
 
   if (isVeritasSite) {
     document.documentElement.dataset.veritasShieldInstalled = "true";
+
+    // Responsive live ping listener for real-time status checks
+    window.addEventListener("veritas_ping", () => {
+      window.dispatchEvent(new CustomEvent("veritas_pong"));
+    });
+    // Trigger immediate pong on script load
+    window.dispatchEvent(new CustomEvent("veritas_pong"));
+
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
       localStorage.setItem("veritasai_scans", JSON.stringify(scanHistory));
       window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(scanHistory) }));

@@ -34,12 +34,29 @@ function SecurityCenter() {
 
   useEffect(() => {
     const check = () => {
-      const active = document.documentElement.dataset.veritasShieldInstalled === "true";
-      setIsExtensionInstalled(active);
+      let active = false;
+      const handlePong = () => {
+        active = true;
+        setIsExtensionInstalled(true);
+      };
+      window.addEventListener("veritas_pong", handlePong);
+      window.dispatchEvent(new CustomEvent("veritas_ping"));
+      
+      setTimeout(() => {
+        if (!active) {
+          setIsExtensionInstalled(false);
+        }
+        window.removeEventListener("veritas_pong", handlePong);
+      }, 250);
     };
+
     check();
-    const timer = setTimeout(check, 400);
-    return () => clearTimeout(timer);
+
+    // Check again on window focus (in case they toggle the extension in another tab)
+    window.addEventListener("focus", check);
+    return () => {
+      window.removeEventListener("focus", check);
+    };
   }, []);
 
   useEffect(() => {
