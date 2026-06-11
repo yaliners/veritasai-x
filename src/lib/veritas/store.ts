@@ -12,6 +12,70 @@ const DEFAULT_SETTINGS: SecuritySettings = {
 
 const DEFAULT_TRUSTED: TrustedSite[] = [];
 
+// Global extension status state
+let globalExtensionInstalled = typeof window !== "undefined" && document.documentElement.dataset.veritasShieldInstalled === "true";
+const listeners = new Set<(val: boolean) => void>();
+
+export function getExtensionInstalled() {
+  return globalExtensionInstalled;
+}
+
+export function subscribeExtensionInstalled(listener: (val: boolean) => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+export function setExtensionInstalled(val: boolean) {
+  if (globalExtensionInstalled !== val) {
+    globalExtensionInstalled = val;
+    listeners.forEach((l) => l(val));
+  }
+}
+
+export function useExtensionInstalled() {
+  const [installed, setInstalled] = useState(globalExtensionInstalled);
+
+  useEffect(() => {
+    setInstalled(globalExtensionInstalled);
+    return subscribeExtensionInstalled(setInstalled);
+  }, []);
+
+  return installed;
+}
+
+if (typeof window !== "undefined") {
+  const check = () => {
+    let active = false;
+    const handlePong = () => {
+      active = true;
+      setExtensionInstalled(true);
+      document.documentElement.dataset.veritasShieldInstalled = "true";
+    };
+    window.addEventListener("veritas_pong", handlePong);
+    window.dispatchEvent(new CustomEvent("veritas_ping"));
+    
+    setTimeout(() => {
+      if (!active) {
+        setExtensionInstalled(false);
+        delete document.documentElement.dataset.veritasShieldInstalled;
+        
+        // Wipe threat history from localStorage when extension is disabled or deleted
+        localStorage.removeItem("veritasai_scans");
+        window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
+      }
+      window.removeEventListener("veritas_pong", handlePong);
+    }, 250);
+  };
+
+  // Run initial check
+  check();
+
+  // Run on focus
+  window.addEventListener("focus", check);
+}
+
 function read<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -35,7 +99,7 @@ function useVeritasStore<T>(key: string, initial: () => T) {
     setValue(read<T>(key, initial()));
     const handler = (e: Event) => {
       const d = (e as CustomEvent).detail;
-      if (d === key) setValue(read<T>(key, initial()));
+      if (d === key || d === "*") setValue(read<T>(key, initial()));
     };
     window.addEventListener("veritas:update", handler);
     return () => window.removeEventListener("veritas:update", handler);
@@ -57,7 +121,7 @@ function useVeritasStore<T>(key: string, initial: () => T) {
 }
 
 function loadThreatsFromExtension(): ThreatRecord[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined" || !globalExtensionInstalled) return [];
   try {
     const extData = localStorage.getItem("veritasai_scans");
     if (extData) {
@@ -98,7 +162,9 @@ function loadThreatsFromExtension(): ThreatRecord[] {
 }
 
 export function useThreats() {
-  return useVeritasStore<ThreatRecord[]>(THREATS_KEY, loadThreatsFromExtension);
+  const [threats, setThreats] = useVeritasStore<ThreatRecord[]>(THREATS_KEY, loadThreatsFromExtension);
+  const installed = useExtensionInstalled();
+  return [installed ? threats : [], setThreats] as const;
 }
 
 export function useTrustedSites() {

@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { StatCard } from "@/components/veritas/stat-card";
 import { EmptyState } from "@/components/veritas/empty-state";
-import { useThreats } from "@/lib/veritas/store";
+import { useThreats, useExtensionInstalled } from "@/lib/veritas/store";
 import { ShieldCheck, ShieldAlert, ShieldX, Shield, Brain, TrendingUp } from "lucide-react";
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, Legend,
@@ -23,6 +23,7 @@ const COLORS = ["oklch(0.65 0.24 27)", "oklch(0.78 0.16 75)", "oklch(0.72 0.18 1
 
 function AnalyticsCenter() {
   const [threats] = useThreats();
+  const isExtensionInstalled = useExtensionInstalled();
 
   const counts = useMemo(() => {
     const c = { DANGEROUS: 0, SUSPICIOUS: 0, SAFE: 0, TRUSTED: 0 };
@@ -88,8 +89,8 @@ function AnalyticsCenter() {
     <>
       <Topbar title="Analytics Center" subtitle="AI-augmented detection intelligence" />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
-        {threats.length === 0 ? (
-          <EmptyState />
+        {threats.length === 0 || !isExtensionInstalled ? (
+          <EmptyState isInstalled={isExtensionInstalled} />
         ) : (
           <>
             <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">

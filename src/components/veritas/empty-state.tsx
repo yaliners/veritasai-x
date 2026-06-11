@@ -1,6 +1,6 @@
 import { Download } from "lucide-react";
 
-export function EmptyState() {
+export function EmptyState({ isInstalled = false }: { isInstalled?: boolean }) {
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = "/veritasai-extension.zip";
@@ -18,24 +18,31 @@ export function EmptyState() {
         </svg>
       </div>
 
-      <h3 className="text-lg font-semibold text-foreground mb-2">No scan data yet</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-2">
+        {isInstalled ? "Awaiting scan telemetry" : "No scan data yet"}
+      </h3>
 
       <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
-        Install the VeritasShield AI extension and browse some websites to see real threat data here
+        {isInstalled 
+          ? "The VeritasShield AI extension is active. Start browsing websites to see real-time threat intelligence and metrics here."
+          : "Install the VeritasShield AI extension and browse some websites to see real threat data here"
+        }
       </p>
 
-      <div className="flex flex-col items-center gap-2">
-        <button
-          onClick={handleDownload}
-          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-cyan/80 px-4 py-2 text-sm font-semibold text-cyber-dark hover:shadow-lg hover:shadow-cyber-cyan/40 transition-shadow"
-        >
-          <Download className="h-4 w-4" />
-          Download Extension
-        </button>
-        <p className="text-[10px] text-muted-foreground">
-          Chrome extension • Manifest V3 • Free
-        </p>
-      </div>
+      {!isInstalled && (
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={handleDownload}
+            className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-cyber-cyan/80 px-4 py-2 text-sm font-semibold text-cyber-dark hover:shadow-lg hover:shadow-cyber-cyan/40 transition-shadow"
+          >
+            <Download className="h-4 w-4" />
+            Download Extension
+          </button>
+          <p className="text-[10px] text-muted-foreground">
+            Chrome extension • Manifest V3 • Free
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Topbar } from "@/components/veritas/topbar";
 import { StatCard } from "@/components/veritas/stat-card";
 import { RiskBadge } from "@/components/veritas/risk-badge";
 import { EmptyState } from "@/components/veritas/empty-state";
-import { useThreats } from "@/lib/veritas/store";
+import { useThreats, useExtensionInstalled } from "@/lib/veritas/store";
 import { ShieldCheck, ShieldAlert, Brain, Cpu, ArrowUpRight, Activity } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -30,34 +30,7 @@ function SecurityCenter() {
   const [threats, updateThreats] = useThreats();
   const [searchQuery, setSearchQuery] = useState("");
   const [lastNotified, setLastNotified] = useState<Set<string>>(new Set());
-  const [isExtensionInstalled, setIsExtensionInstalled] = useState(true);
-
-  useEffect(() => {
-    const check = () => {
-      let active = false;
-      const handlePong = () => {
-        active = true;
-        setIsExtensionInstalled(true);
-      };
-      window.addEventListener("veritas_pong", handlePong);
-      window.dispatchEvent(new CustomEvent("veritas_ping"));
-      
-      setTimeout(() => {
-        if (!active) {
-          setIsExtensionInstalled(false);
-        }
-        window.removeEventListener("veritas_pong", handlePong);
-      }, 250);
-    };
-
-    check();
-
-    // Check again on window focus (in case they toggle the extension in another tab)
-    window.addEventListener("focus", check);
-    return () => {
-      window.removeEventListener("focus", check);
-    };
-  }, []);
+  const isExtensionInstalled = useExtensionInstalled();
 
   useEffect(() => {
     const updateFromLocalStorage = () => {
@@ -219,7 +192,7 @@ function SecurityCenter() {
       />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
         {threats.length === 0 || !isExtensionInstalled ? (
-          <EmptyState />
+          <EmptyState isInstalled={isExtensionInstalled} />
         ) : searchQuery && filteredThreats.length === 0 ? (
           <div className="rounded-2xl border border-cyber-cyan/30 bg-cyber-cyan/5 p-6 text-center">
             <p className="text-sm text-cyber-cyan font-semibold">No results found</p>

@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { RiskBadge } from "@/components/veritas/risk-badge";
 import { EmptyState } from "@/components/veritas/empty-state";
-import { useThreats, exportThreatsCSV, downloadCSV } from "@/lib/veritas/store";
+import { useThreats, exportThreatsCSV, downloadCSV, useExtensionInstalled } from "@/lib/veritas/store";
 import { Search, Download, X, Brain, KeyRound, AlertTriangle, ShieldCheck, ChevronDown } from "lucide-react";
 import type { ThreatRecord, Risk } from "@/lib/veritas/types";
 
@@ -61,6 +61,7 @@ function generateExplanation(threat: ThreatRecord) {
 
 function ThreatCenter() {
   const [threats] = useThreats();
+  const isExtensionInstalled = useExtensionInstalled();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Risk | "ALL">("ALL");
   const [selected, setSelected] = useState<ThreatRecord | null>(null);
@@ -93,9 +94,9 @@ function ThreatCenter() {
     <>
       <Topbar title="Threat Intelligence Center" subtitle="Forensic database with XAI explainability" />
       <main className="flex flex-1 gap-6 p-4 lg:p-8">
-        {threats.length === 0 ? (
+        {threats.length === 0 || !isExtensionInstalled ? (
           <div className="glass flex-1 rounded-2xl p-6 shadow-[var(--shadow-card)] flex items-center justify-center">
-            <EmptyState />
+            <EmptyState isInstalled={isExtensionInstalled} />
           </div>
         ) : (
           <div className="glass flex-1 rounded-2xl p-6 shadow-[var(--shadow-card)]">
