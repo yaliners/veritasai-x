@@ -15,16 +15,16 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border/60 bg-sidebar/80 backdrop-blur-xl">
-      <div className="flex items-center gap-3 px-6 py-6">
+      <Link to="/" className="flex items-center gap-3 px-6 py-6 hover:opacity-90 transition-opacity">
         <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyber-cyan to-primary shadow-[var(--shadow-glow)]">
           <Shield className="h-5 w-5 text-background" />
           <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cyber-success pulse-dot" />
         </div>
         <div>
-          <p className="text-sm font-bold tracking-tight">VeritasShield AI</p>
+          <p className="text-sm font-bold tracking-tight text-foreground">VeritasShield AI</p>
           <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">v1.0.0 · SOC</p>
         </div>
-      </div>
+      </Link>
 
       <nav className="flex-1 space-y-1 px-3">
         <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Operations</p>
