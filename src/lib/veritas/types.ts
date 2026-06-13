@@ -4,7 +4,13 @@ export type DetectionModule =
   | "Scam Pattern"
   | "AI Content"
   | "Dark Pattern"
-  | "Trust Engine";
+  | "Trust Engine"
+  | "Blocklist"
+  | "Heuristics"
+  | "Malware Detection"
+  | "New Domain — High Risk"
+  | "SSL Check"
+  | "Content NLP";
 
 export interface ThreatRecord {
   id: string;
@@ -43,5 +49,11 @@ export interface SecuritySettings {
     autoScan: boolean;
     popupAlerts: boolean;
     overlayAlerts: boolean;
+  };
+  apiKeys?: {
+    googleSafeBrowsing: string;
+    ipQualityScore: string;
+    virusTotal: string;
+    whoisXml: string;
   };
 }

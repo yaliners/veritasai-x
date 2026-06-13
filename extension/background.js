@@ -45,3 +45,22 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
     }
   }
 });
+
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (message.action === "updateBadge" && sender.tab) {
+    const tabId = sender.tab.id;
+    if (message.risk === "DANGEROUS") {
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#ef4444" });
+      chrome.action.setBadgeText({ tabId, text: "DNG" });
+    } else if (message.risk === "SUSPICIOUS") {
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#f59e0b" });
+      chrome.action.setBadgeText({ tabId, text: "SPC" });
+    } else if (message.risk === "TRUSTED") {
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#10b981" });
+      chrome.action.setBadgeText({ tabId, text: "OK" });
+    } else {
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#00d8ff" });
+      chrome.action.setBadgeText({ tabId, text: "AI" });
+    }
+  }
+});

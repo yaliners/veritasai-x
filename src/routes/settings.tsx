@@ -21,11 +21,28 @@ function SettingsCenter() {
   const [settings, setSettings] = useSettings();
   const isExtensionInstalled = useExtensionInstalled();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [apiKeys, setApiKeys] = useState({
+    googleSafeBrowsing: settings.apiKeys?.googleSafeBrowsing || "",
+    ipQualityScore: settings.apiKeys?.ipQualityScore || "",
+    virusTotal: settings.apiKeys?.virusTotal || "",
+    whoisXml: settings.apiKeys?.whoisXml || "",
+  });
 
   useEffect(() => {
     const activeTheme = document.documentElement.classList.contains("light") ? "light" : "dark";
     setTheme(activeTheme);
   }, []);
+
+  useEffect(() => {
+    if (settings.apiKeys) {
+      setApiKeys({
+        googleSafeBrowsing: settings.apiKeys.googleSafeBrowsing || "",
+        ipQualityScore: settings.apiKeys.ipQualityScore || "",
+        virusTotal: settings.apiKeys.virusTotal || "",
+        whoisXml: settings.apiKeys.whoisXml || "",
+      });
+    }
+  }, [settings]);
 
   const changeTheme = (mode: "dark" | "light") => {
     setTheme(mode);
@@ -47,7 +64,15 @@ function SettingsCenter() {
   }
 
   function handleSaveSettings() {
-    setSettings(settings);
+    setSettings({
+      ...settings,
+      apiKeys: {
+        googleSafeBrowsing: apiKeys.googleSafeBrowsing,
+        ipQualityScore: apiKeys.ipQualityScore,
+        virusTotal: apiKeys.virusTotal,
+        whoisXml: apiKeys.whoisXml,
+      },
+    });
     toast.success("Settings saved successfully!", {
       description: "Extension configuration has been synchronized.",
       duration: 3000,
@@ -94,6 +119,53 @@ function SettingsCenter() {
                 {controlItems.map((m) => (
                   <ToggleRow key={m.key} label={m.label} desc={m.desc} value={settings.controls[m.key]} onChange={() => toggleControl(m.key)} />
                 ))}
+              </div>
+            </section>
+
+            <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
+              <h2 className="text-base font-semibold">API Integration Settings</h2>
+              <p className="mb-4 text-xs text-muted-foreground">Configure keys for real-time external threat indicators.</p>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-foreground/90">Google Safe Browsing API Key</label>
+                  <input
+                    type="password"
+                    value={apiKeys.googleSafeBrowsing}
+                    onChange={(e) => setApiKeys({ ...apiKeys, googleSafeBrowsing: e.target.value })}
+                    placeholder="Enter Google API Key"
+                    className="w-full rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-xs outline-none focus:border-cyber-cyan/60"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-foreground/90">IPQualityScore API Key</label>
+                  <input
+                    type="password"
+                    value={apiKeys.ipQualityScore}
+                    onChange={(e) => setApiKeys({ ...apiKeys, ipQualityScore: e.target.value })}
+                    placeholder="Enter IPQS API Key"
+                    className="w-full rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-xs outline-none focus:border-cyber-cyan/60"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-foreground/90">VirusTotal API Key</label>
+                  <input
+                    type="password"
+                    value={apiKeys.virusTotal}
+                    onChange={(e) => setApiKeys({ ...apiKeys, virusTotal: e.target.value })}
+                    placeholder="Enter VirusTotal API Key"
+                    className="w-full rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-xs outline-none focus:border-cyber-cyan/60"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-foreground/90">WhoisXMLAPI Key</label>
+                  <input
+                    type="password"
+                    value={apiKeys.whoisXml}
+                    onChange={(e) => setApiKeys({ ...apiKeys, whoisXml: e.target.value })}
+                    placeholder="Enter WhoisXMLAPI Key"
+                    className="w-full rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-xs outline-none focus:border-cyber-cyan/60"
+                  />
+                </div>
               </div>
             </section>
 
