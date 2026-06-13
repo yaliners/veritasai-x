@@ -412,7 +412,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
               domainAge: result.module === "New Domain — High Risk" ? 30 : 0,
               local: result.score - (result.modules.phishing > 90 ? 25 : 0)
             },
-            time: new Date().toISOString(),
+            time: Date.now(),
             cached: false,
             reasons: result.reasons,
             modules: result.modules,

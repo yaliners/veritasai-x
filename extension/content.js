@@ -289,7 +289,7 @@
           aiPrediction: "Benign",
           mlRisk: "Low",
           subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
-          time: new Date().toISOString(),
+          time: Date.now(),
           cached: false,
           reasons: ["Permanent safe listed domain"]
         };
@@ -329,7 +329,7 @@
             aiPrediction: "Malicious",
             mlRisk: "High",
             subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
-            time: new Date().toISOString(),
+            time: Date.now(),
             cached: false,
             reasons: ["Blacklisted dangerous domain"]
           };
@@ -354,7 +354,7 @@
             aiPrediction: "Suspicious",
             mlRisk: "Medium",
             subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
-            time: new Date().toISOString(),
+            time: Date.now(),
             cached: false,
             reasons: ["Blacklisted suspicious domain"]
           };
@@ -578,7 +578,7 @@
             domainAge: domainAgeFlag,
             local: localScore
           },
-          time: new Date().toISOString(),
+          time: Date.now(),
           cached: false,
           reasons: reasons
         };
