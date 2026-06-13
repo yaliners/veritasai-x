@@ -325,7 +325,7 @@
             score: 95,
             trustScore: 5,
             mlConfidence: "95%",
-            module: "Phishing URL",
+            module: "Blocklist",
             aiPrediction: "Malicious",
             mlRisk: "High",
             subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
@@ -350,7 +350,7 @@
             score: 65,
             trustScore: 35,
             mlConfidence: "65%",
-            module: "Scam Pattern",
+            module: "Blocklist",
             aiPrediction: "Suspicious",
             mlRisk: "Medium",
             subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
@@ -553,13 +553,13 @@
         // Module Name Selection (Part 8)
         let moduleName = "Trust Engine";
         if (gsbMatched) moduleName = "Phishing URL";
-        else if (vtMalicious) moduleName = "Phishing URL";
+        else if (vtMalicious) moduleName = "Malware Detection";
         else if (ipqsPhish) moduleName = "Scam Pattern";
-        else if (whoisResult && whoisResult.age < 30) moduleName = "Scam Pattern";
-        else if (M6_score > 0) moduleName = "Scam Pattern";
-        else if (M7_score > 0) moduleName = "AI Content";
+        else if (whoisResult && whoisResult.age < 30) moduleName = "New Domain — High Risk";
+        else if (M6_score > 0) moduleName = "SSL Check";
+        else if (M7_score > 0) moduleName = "Content NLP";
         else if (M5_score > 0) moduleName = "Dark Pattern";
-        else if (M8_score > 0) moduleName = "Phishing URL";
+        else if (M8_score > 0) moduleName = "URL Analysis";
 
         const scanResult = {
           url: url,

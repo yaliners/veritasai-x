@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "VeritasShield AI — Browser Security",
+  "version": "1.0.0",
+  "description": "AI-powered protection from phishing, scams, AI-generated fraud, and dark patterns.",
+  "permissions": ["activeTab", "storage", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "VeritasShield AI",
+    "default_icon": "icon.png"
+  },
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://veritasai-shield.vercel.app/*", "http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": { "16": "icon.png", "48": "icon.png", "128": "icon.png" }
+}

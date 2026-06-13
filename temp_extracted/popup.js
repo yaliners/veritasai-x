@@ -199,7 +199,7 @@ async function classifyAsync(url, title = "") {
       conf: 95,
       reasons: ["Blacklisted dangerous domain"],
       modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
-      module: "Phishing URL"
+      module: "Blocklist"
     };
   }
 
@@ -212,7 +212,7 @@ async function classifyAsync(url, title = "") {
       conf: 65,
       reasons: ["Blacklisted suspicious domain"],
       modules: { phishing: 65, scam: 15, ai: 50, dark: 10, trust: 35 },
-      module: "Scam Pattern"
+      module: "Blocklist"
     };
   }
 
@@ -312,11 +312,11 @@ async function classifyAsync(url, title = "") {
   // Module Name Selection (Part 8)
   let moduleName = "Trust Engine";
   if (gsbMatched) moduleName = "Phishing URL";
-  else if (vtMalicious) moduleName = "Phishing URL";
+  else if (vtMalicious) moduleName = "Malware Detection";
   else if (ipqsPhish) moduleName = "Scam Pattern";
-  else if (whoisResult && whoisResult.age < 30) moduleName = "Scam Pattern";
-  else if (M6_score > 0) moduleName = "Scam Pattern";
-  else if (M8_score > 0) moduleName = "Phishing URL";
+  else if (whoisResult && whoisResult.age < 30) moduleName = "New Domain — High Risk";
+  else if (M6_score > 0) moduleName = "SSL Check";
+  else if (M8_score > 0) moduleName = "URL Analysis";
 
   if (reasons.length === 0) {
     reasons.push("No malicious indicators detected");

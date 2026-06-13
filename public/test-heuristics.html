@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VeritasShield Local Heuristics Tester</title>
+  <style>
+    body {
+      background: #020817;
+      color: #e6edf7;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #081225;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 32px;
+      border-radius: 16px;
+      max-width: 440px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #9aa8c2;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .item {
+      margin-bottom: 16px;
+    }
+    .timer-container {
+      font-weight: bold;
+      color: #ef4444;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>VeritasShield Tester</h1>
+    <p>This page contains elements designed to trigger local heuristics (such as Dark Patterns).</p>
+
+    <!-- Dark Pattern: Countdown Timer -->
+    <div class="item">
+      <div id="expiry-timer" class="timer-container">
+        Offer expires in 10 minutes!
+      </div>
+    </div>
+
+    <!-- Dark Pattern: Pre-ticked checkbox -->
+    <div class="item">
+      <label>
+        <input type="checkbox" checked>
+        Subscribe to spam newsletters and marketing updates
+      </label>
+    </div>
+
+    <!-- Dark Pattern: Hidden opt-out -->
+    <div style="display: none;">
+      unsubscribe opt-out options
+    </div>
+  </div>
+</body>
+</html>
