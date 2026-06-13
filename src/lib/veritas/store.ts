@@ -133,6 +133,7 @@ function loadThreatsFromExtension(): ThreatRecord[] {
         trustScore: number;
         aiPrediction: string;
         mlRisk: string;
+        module?: string;
         time: number;
       }>;
       // Filter: only show present data (last 24 hours)
@@ -149,7 +150,7 @@ function loadThreatsFromExtension(): ThreatRecord[] {
         confidence: 80 + Math.floor(Math.random() * 20),
         aiPrediction: s.aiPrediction,
         mlRisk: s.mlRisk,
-        module: s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine",
+        module: s.module || (s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine"),
         reasons: [],
         severity: s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
         timestamp: s.time,

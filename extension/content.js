@@ -1,4 +1,25 @@
 (function () {
+  const DANGEROUS_BLOCKLIST = [
+    "phishing.testing.google.test",
+    "malware.testing.google.test",
+    "testphp.vulnweb.com",
+    "testfire.net",
+    "zero.webappsecurity.com",
+    "secure-paypal-login.net",
+    "paypa1.com",
+    "crypto-doubler.xyz",
+    "freerobux-generator.xyz",
+    "win-prize-now.click"
+  ];
+
+  const SUSPICIOUS_BLOCKLIST = [
+    "netmirror.org",
+    "crackingpatching.com",
+    "softonic.com",
+    "opensubtitles.org",
+    "fmovies.to"
+  ];
+
   const isVeritasSite = window.location.href.includes("veritasai-shield.vercel.app") || window.location.href.includes("localhost:") || window.location.href.includes("127.0.0.1:");
 
   if (isVeritasSite) {
@@ -72,39 +93,36 @@
 
       let score = 0;
       const reasons = [];
-      let isTestBed = false;
+      let moduleName = "Trust Engine";
+      
+      const lowerUrl = url.toLowerCase();
+      const pageTitle = document.title ? document.title.toLowerCase() : "";
 
-      // Detect known security testing beds
-      if (host.includes("testing.google.test")) {
-        const isPhishing = host.includes("phishing");
-        const isMalware = host.includes("malware");
-        const testType = isPhishing ? "Phishing" : isMalware ? "Malware" : "Security";
+      const DANGEROUS_KEYWORDS = ["phishing", "malware", "trojan", "ransomware", "keylogger", "exploit", "payload", "botnet"];
+      const SUSPICIOUS_KEYWORDS = [".xyz", ".tk", ".ml", ".ga", ".cf", ".click", ".top", ".gq", "free-", "win-", "claim-", "crypto-", "login-secure", "verify-account"];
+
+      const isDangerousDomain = DANGEROUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
+      const isSuspiciousDomain = SUSPICIOUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
+      const hasDangerousKeyword = DANGEROUS_KEYWORDS.some(k => lowerUrl.includes(k) || pageTitle.includes(k));
+      const hasSuspiciousKeyword = SUSPICIOUS_KEYWORDS.some(k => lowerUrl.includes(k)) || /\d{3,}/.test(host);
+
+      if (isDangerousDomain) {
         score = 95;
-        reasons.push(`Known Google ${testType} Test Bed`);
-        isTestBed = true;
-      } else if (host === "testfire.net" || host.endsWith(".testfire.net")) {
-        score = 90;
-        reasons.push("Known vulnerable test bed (IBM Altoro Mutual)");
-        isTestBed = true;
-      } else if (host === "vulnweb.com" || host.endsWith(".vulnweb.com")) {
-        score = 92;
-        reasons.push("Known vulnerable test bed (Acunetix VulnWeb)");
-        isTestBed = true;
-      } else if (host === "webappsecurity.com" || host.endsWith(".webappsecurity.com")) {
-        score = 88;
-        reasons.push("Known vulnerable test bed (HP WebAppSecurity)");
-        isTestBed = true;
-      } else if (host.includes("eicar.org") || host.includes("wicar.org")) {
-        score = 99;
-        reasons.push("Standard EICAR/WICAR malware and browser exploit test bed");
-        isTestBed = true;
-      } else if (host.includes("phishing") || host.includes("malware") || host.includes("vuln")) {
-        score = 85;
-        reasons.push("Domain contains suspicious keywords (phishing/malware/vuln)");
-        isTestBed = true;
-      }
-
-      if (!isTestBed) {
+        reasons.push("Blacklisted dangerous domain");
+        moduleName = "Blocklist";
+      } else if (isSuspiciousDomain) {
+        score = 65;
+        reasons.push("Blacklisted suspicious domain");
+        moduleName = "Blocklist";
+      } else if (hasDangerousKeyword) {
+        score = 95;
+        reasons.push("Dangerous keyword detected in URL or page title");
+        moduleName = "Heuristics";
+      } else if (hasSuspiciousKeyword) {
+        score = 65;
+        reasons.push("Suspicious pattern or TLD detected in URL");
+        moduleName = "Heuristics";
+      } else {
         const text = document.body ? document.body.innerText.toLowerCase() : "";
 
         // 2. Respect Phishing Detector (Security Module)
@@ -140,6 +158,8 @@
             }
           });
         }
+        
+        moduleName = score >= 85 ? "Phishing URL" : score >= 50 ? "Scam Pattern" : "Trust Engine";
       }
 
       // Heuristics mapping for visual feedback in score
@@ -151,6 +171,7 @@
         trustScore: Math.max(0, 100 - score),
         aiPrediction: score >= 85 ? "Malicious" : score >= 50 ? "Suspicious" : "Benign",
         mlRisk: (Math.min(100, score) / 100).toFixed(2),
+        module: moduleName,
         time: Date.now(),
       };
 

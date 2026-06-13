@@ -1,90 +1,99 @@
+const DANGEROUS_BLOCKLIST = [
+  "phishing.testing.google.test",
+  "malware.testing.google.test",
+  "testphp.vulnweb.com",
+  "testfire.net",
+  "zero.webappsecurity.com",
+  "secure-paypal-login.net",
+  "paypa1.com",
+  "crypto-doubler.xyz",
+  "freerobux-generator.xyz",
+  "win-prize-now.click"
+];
+
+const SUSPICIOUS_BLOCKLIST = [
+  "netmirror.org",
+  "crackingpatching.com",
+  "softonic.com",
+  "opensubtitles.org",
+  "fmovies.to"
+];
+
 const PHISHING = ["login", "verify", "bank", "account", "password", "otp", "reset-password", "security-alert", "confirm-identity", "suspended"];
 const SCAM = ["free-money", "lottery", "claim", "giveaway", "double-your", "wire-transfer", "send-bitcoin", "guarantee", "urgent-payment", "gift-card"];
 const DARK = ["limited-time", "act-now", "ends-in", "only-today", "flash-sale"];
 const TRUSTED = ["github.com", "google.com", "stripe.com", "openai.com", "wikipedia.org", "microsoft.com", "apple.com", "mozilla.org"];
 
-function classify(url, userTrusted = []) {
+function classify(url, title = "", userTrusted = []) {
   let host = ""; try { host = new URL(url).hostname.toLowerCase(); } catch { host = url.toLowerCase(); }
   const lower = url.toLowerCase();
+  const lowerTitle = title.toLowerCase();
   const reasons = [];
   const modules = { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 };
 
   const allTrusted = [...TRUSTED, ...userTrusted];
 
   if (allTrusted.some((d) => host === d || host.endsWith("." + d))) {
-    return { host, risk: "TRUSTED", score: 0, trust: 100, conf: 99, reasons: ["Whitelisted high-reputation domain", "Verified SSL", "Established WHOIS history"], modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 } };
+    return { host, risk: "TRUSTED", score: 0, trust: 100, conf: 99, reasons: ["Whitelisted high-reputation domain", "Verified SSL", "Established WHOIS history"], modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 }, module: "Trust Engine" };
   }
 
-  // Detect known security testing beds
-  if (host.includes("testing.google.test")) {
-    const isPhishing = host.includes("phishing");
-    const isMalware = host.includes("malware");
-    const testType = isPhishing ? "Phishing" : isMalware ? "Malware" : "Security";
+  const DANGEROUS_KEYWORDS = ["phishing", "malware", "trojan", "ransomware", "keylogger", "exploit", "payload", "botnet"];
+  const SUSPICIOUS_KEYWORDS = [".xyz", ".tk", ".ml", ".ga", ".cf", ".click", ".top", ".gq", "free-", "win-", "claim-", "crypto-", "login-secure", "verify-account"];
+
+  const isDangerousDomain = DANGEROUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
+  const isSuspiciousDomain = SUSPICIOUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
+  const hasDangerousKeyword = DANGEROUS_KEYWORDS.some(k => lower.includes(k) || lowerTitle.includes(k));
+  const hasSuspiciousKeyword = SUSPICIOUS_KEYWORDS.some(k => lower.includes(k)) || /\d{3,}/.test(host);
+
+  if (isDangerousDomain) {
     return {
       host,
       risk: "DANGEROUS",
       score: 95,
       trust: 5,
       conf: 98,
-      reasons: [`Known Google ${testType} Test Bed`, "Insecure HTTP connection", "Flagged by Chrome Safe Browsing Heuristics"],
-      modules: { phishing: isPhishing ? 95 : 20, scam: isMalware ? 95 : 20, ai: 85, dark: 10, trust: 5 }
-    };
-  }
-  if (host === "testfire.net" || host.endsWith(".testfire.net")) {
-    return {
-      host,
-      risk: "DANGEROUS",
-      score: 90,
-      trust: 10,
-      conf: 95,
-      reasons: ["Known vulnerable test bed (IBM Altoro Mutual)", "Unencrypted login forms detected", "Simulated threat environment"],
-      modules: { phishing: 90, scam: 50, ai: 80, dark: 10, trust: 10 }
-    };
-  }
-  if (host === "vulnweb.com" || host.endsWith(".vulnweb.com")) {
-    return {
-      host,
-      risk: "DANGEROUS",
-      score: 92,
-      trust: 8,
-      conf: 96,
-      reasons: ["Known vulnerable test bed (Acunetix VulnWeb)", "Cross-site scripting (XSS) vectors exposed", "Simulated threat environment"],
-      modules: { phishing: 92, scam: 40, ai: 75, dark: 20, trust: 8 }
-    };
-  }
-  if (host === "webappsecurity.com" || host.endsWith(".webappsecurity.com")) {
-    return {
-      host,
-      risk: "DANGEROUS",
-      score: 88,
-      trust: 12,
-      conf: 94,
-      reasons: ["Known vulnerable test bed (HP WebAppSecurity)", "Insecure SQL injection endpoints detected", "Simulated threat environment"],
-      modules: { phishing: 88, scam: 30, ai: 70, dark: 15, trust: 12 }
-    };
-  }
-  if (host.includes("eicar.org") || host.includes("wicar.org")) {
-    return {
-      host,
-      risk: "DANGEROUS",
-      score: 99,
-      trust: 1,
-      conf: 99,
-      reasons: ["Standard EICAR/WICAR malware and browser exploit test bed", "Signature matches test virus patterns"],
-      modules: { phishing: 50, scam: 99, ai: 90, dark: 10, trust: 1 }
+      reasons: ["Blacklisted dangerous domain"],
+      modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
+      module: "Blocklist"
     };
   }
 
-  // General test keywords in hostnames that are not trusted
-  if (host.includes("phishing") || host.includes("malware") || host.includes("vuln")) {
+  if (isSuspiciousDomain) {
+    return {
+      host,
+      risk: "SUSPICIOUS",
+      score: 65,
+      trust: 35,
+      conf: 92,
+      reasons: ["Blacklisted suspicious domain"],
+      modules: { phishing: 65, scam: 15, ai: 50, dark: 10, trust: 35 },
+      module: "Blocklist"
+    };
+  }
+
+  if (hasDangerousKeyword) {
     return {
       host,
       risk: "DANGEROUS",
-      score: 85,
-      trust: 15,
+      score: 95,
+      trust: 5,
+      conf: 95,
+      reasons: ["Dangerous keyword detected in URL or page title"],
+      modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
+      module: "Heuristics"
+    };
+  }
+
+  if (hasSuspiciousKeyword) {
+    return {
+      host,
+      risk: "SUSPICIOUS",
+      score: 65,
+      trust: 35,
       conf: 90,
-      reasons: ["Domain contains suspicious keywords (phishing/malware/vuln)", "Insecure HTTP connection", "Suspected spoofing domain"],
-      modules: { phishing: 85, scam: 40, ai: 80, dark: 10, trust: 15 }
+      reasons: ["Suspicious pattern or TLD detected in URL"],
+      modules: { phishing: 65, scam: 15, ai: 55, dark: 15, trust: 35 },
+      module: "Heuristics"
     };
   }
 
@@ -107,7 +116,10 @@ function classify(url, userTrusted = []) {
   modules.trust = trust;
 
   if (reasons.length === 0) reasons.push("No malicious indicators detected", "Domain reputation neutral");
-  return { host, risk, score, trust, conf: 78 + Math.floor(Math.random() * 20), reasons, modules };
+  
+  const finalModule = risk === "DANGEROUS" ? "Phishing URL" : risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine";
+  
+  return { host, risk, score, trust, conf: 78 + Math.floor(Math.random() * 20), reasons, modules, module: finalModule };
 }
 
 function render(r) {
@@ -136,11 +148,12 @@ function render(r) {
 
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = tabs[0]?.url || "about:blank";
+  const title = tabs[0]?.title || "";
   let host = "about:blank";
   try { host = new URL(url).hostname; } catch {}
 
   chrome.storage.local.get(["trustedDomains"], ({ trustedDomains = [] }) => {
-    const result = classify(url, trustedDomains);
+    const result = classify(url, title, trustedDomains);
     render(result);
 
     // If this is a real web page, add it to scanHistory (unless already added by content script)
@@ -159,6 +172,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             trustScore: result.trust,
             aiPrediction: result.risk === "DANGEROUS" ? "Malicious" : result.risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
             mlRisk: (result.score / 100).toFixed(2),
+            module: result.module,
             time: Date.now(),
           };
           nextHistory = [scanResult, ...scanHistory].slice(0, 50);
