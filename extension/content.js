@@ -1,24 +1,50 @@
 (function () {
+  const GOOGLE_SAFE_BROWSING_KEY = "AIzaSyAhlLFE9g0jR7wVbq-pRTMyAYRRLhfwrWs";
+  const IPQS_KEY = "sYnwTP8nMlIBGLK8dCXbUyDQEwQSXCiO";
+  const VIRUSTOTAL_KEY = "f50bfa739b08364404699b51bc26f326b2923a20222007b179e8b2b048a486e8";
+  const WHOIS_KEY = "at_XlkBiABAXaNSHT8KMsLEGgnssnVc2";
+
+  const PERMANENT_SAFE = [
+    "google.com", "youtube.com", "github.com",
+    "microsoft.com", "apple.com", "amazon.com",
+    "claude.ai", "chatgpt.com", "linkedin.com",
+    "twitter.com", "instagram.com", "facebook.com",
+    "whatsapp.com", "wikipedia.org", "stackoverflow.com",
+    "netflix.com", "spotify.com", "reddit.com",
+    "anthropic.com", "openai.com", "vercel.app",
+    "veritasai-shield.vercel.app"
+  ];
+
   const DANGEROUS_BLOCKLIST = [
     "phishing.testing.google.test",
     "malware.testing.google.test",
-    "testphp.vulnweb.com",
-    "testfire.net",
-    "zero.webappsecurity.com",
+    "testscam.html",
     "secure-paypal-login.net",
     "paypa1.com",
     "crypto-doubler.xyz",
     "freerobux-generator.xyz",
-    "win-prize-now.click"
+    "win-prize-now.click",
+    "fake-bank-login.net",
+    "amaz0n-orders-support.help"
   ];
 
   const SUSPICIOUS_BLOCKLIST = [
     "netmirror.org",
     "crackingpatching.com",
     "softonic.com",
+    "fmovies.to",
     "opensubtitles.org",
-    "fmovies.to"
+    "testphp.vulnweb.com",
+    "testfire.net",
+    "zero.webappsecurity.com"
   ];
+
+  // Global user interaction tracker for checkboxes
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.type === "checkbox") {
+      e.target.dataset.veritasUserClicked = "true";
+    }
+  }, true);
 
   const isVeritasSite = window.location.href.includes("veritasai-shield.vercel.app") || window.location.href.includes("localhost:") || window.location.href.includes("127.0.0.1:");
 
@@ -29,12 +55,18 @@
     window.addEventListener("veritas_ping", () => {
       window.dispatchEvent(new CustomEvent("veritas_pong"));
     });
-    // Trigger immediate pong on script load
     window.dispatchEvent(new CustomEvent("veritas_pong"));
 
+    // Sync scan history to webpage localStorage
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
       localStorage.setItem("veritasai_scans", JSON.stringify(scanHistory));
       window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(scanHistory) }));
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === "veritasai_scans" && !e.newValue) {
+        chrome.storage.local.set({ scanHistory: [] });
+      }
     });
 
     // Sync settings from webpage to extension
@@ -89,6 +121,135 @@
     return;
   }
 
+  function withTimeout(promise, ms) {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        resolve(null);
+      }, ms);
+      promise.then(
+        (val) => {
+          clearTimeout(timer);
+          resolve(val);
+        },
+        (err) => {
+          clearTimeout(timer);
+          resolve(null);
+        }
+      );
+    });
+  }
+
+  async function checkGoogleSafeBrowsing(url, key) {
+    if (!key) return null;
+    try {
+      const gsbUrl = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${key}`;
+      const res = await fetch(gsbUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client: { clientId: "veritasai", clientVersion: "1.0" },
+          threatInfo: {
+            threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE"],
+            platformTypes: ["ANY_PLATFORM"],
+            threatEntryTypes: ["URL"],
+            threatEntries: [{ url: url }]
+          }
+        })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return { matched: !!(data.matches && data.matches.length > 0), threatType: data.matches?.[0]?.threatType };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function checkIPQualityScore(url, key) {
+    if (!key) return null;
+    try {
+      const ipqsUrl = `https://ipqualityscore.com/api/json/url/${key}/${encodeURIComponent(url)}`;
+      const res = await fetch(ipqsUrl);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (!data.success) return null;
+      return {
+        fraud_score: data.fraud_score || 0,
+        phishing: data.phishing === true,
+        malware: data.malware === true
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function checkVirusTotal(url, key) {
+    if (!key) return null;
+    let vtId = "";
+    try {
+      const utf8Bytes = new TextEncoder().encode(url);
+      const binaryString = Array.from(utf8Bytes, byte => String.fromCharCode(byte)).join('');
+      vtId = btoa(binaryString).replace(/=/g, "");
+    } catch (e) {
+      vtId = btoa(url).replace(/=/g, "");
+    }
+
+    try {
+      const getRes = await fetch(`https://www.virustotal.com/api/v3/urls/${vtId}`, {
+        headers: { "x-apikey": key }
+      });
+      if (getRes.status === 200) {
+        const data = await getRes.json();
+        return { malicious: data.data?.attributes?.last_analysis_stats?.malicious || 0 };
+      }
+    } catch (e) {}
+
+    try {
+      const postRes = await fetch("https://www.virustotal.com/api/v3/urls", {
+        method: "POST",
+        headers: {
+          "x-apikey": key,
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `url=${encodeURIComponent(url)}`
+      });
+      if (!postRes.ok) return null;
+      const postData = await postRes.json();
+      const analysisId = postData?.data?.id;
+      if (!analysisId) return null;
+
+      const analRes = await fetch(`https://www.virustotal.com/api/v3/analyses/${analysisId}`, {
+        headers: { "x-apikey": key }
+      });
+      if (!analRes.ok) return null;
+      const analData = await analRes.json();
+      return { malicious: analData.data?.attributes?.stats?.malicious || 0 };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function checkWhoisAge(domain, key) {
+    if (!key) return null;
+    try {
+      const whoisUrl = `https://domain-age-checker.whoisxmlapi.com/api/v1?apiKey=${key}&domainName=${domain}`;
+      const res = await fetch(whoisUrl);
+      if (!res.ok) return null;
+      const data = await res.json();
+      let age = data.domainAge || data.estimatedDomainAge || data.WhoisRecord?.estimatedDomainAge;
+      const createdDateStr = data.createdDate || data.WhoisRecord?.createdDate;
+      if (age === undefined && createdDateStr) {
+        const createdTime = Date.parse(createdDateStr);
+        if (!isNaN(createdTime)) {
+          age = Math.floor((Date.now() - createdTime) / (1000 * 60 * 60 * 24));
+        }
+      }
+      if (age === undefined) return null;
+      return { age: Number(age) };
+    } catch (e) {
+      return null;
+    }
+  }
+
   async function initScan() {
     const url = location.href;
 
@@ -96,13 +257,11 @@
     const DEFAULT_SETTINGS = {
       modules: { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false },
       controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
-      apiKeys: { googleSafeBrowsing: "", ipQualityScore: "", virusTotal: "", whoisXml: "" }
     };
 
     chrome.storage.local.get(["settings", "trustedDomains"], async ({ settings = DEFAULT_SETTINGS, trustedDomains = [] }) => {
       const modules = settings?.modules || DEFAULT_SETTINGS.modules;
       const controls = settings?.controls || DEFAULT_SETTINGS.controls;
-      const apiKeys = settings?.apiKeys || DEFAULT_SETTINGS.apiKeys;
 
       // 1. Respect Auto Scan (System Control)
       if (!controls.autoScan) {
@@ -116,367 +275,346 @@
         return; 
       }
 
-      // First check blocklists
-      const isDangerousDomain = DANGEROUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
-      const isSuspiciousDomain = SUSPICIOUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
-
-      if (isDangerousDomain) {
-        const scanResult = {
+      // PART 2 — PERMANENT SAFE LIST
+      const isPermanentSafe = PERMANENT_SAFE.some(d => host === d || host.endsWith("." + d));
+      if (isPermanentSafe) {
+        const safeResult = {
           url: url,
           domain: host,
-          risk: "DANGEROUS",
-          score: 95,
-          trustScore: 5,
-          aiPrediction: "Malicious",
-          mlRisk: "0.95",
-          module: "Blocklist",
-          time: Date.now(),
-          reasons: ["Blacklisted dangerous domain"],
-          modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
-          conf: 98
+          risk: "SAFE",
+          score: 0,
+          trustScore: 100,
+          mlConfidence: "100%",
+          module: "Trust Engine",
+          aiPrediction: "Benign",
+          mlRisk: "Low",
+          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          time: new Date().toISOString(),
+          cached: false,
+          reasons: ["Permanent safe listed domain"]
         };
-        saveScanResult(scanResult);
-        chrome.runtime.sendMessage({ action: "updateBadge", risk: "DANGEROUS" });
-        if (controls.overlayAlerts) {
-          showOverlay(95, ["Blacklisted dangerous domain"]);
-        }
+        saveScanResult(safeResult);
+        chrome.runtime.sendMessage({ action: "updateBadge", risk: "TRUSTED" });
         return;
       }
 
-      if (isSuspiciousDomain) {
-        const scanResult = {
-          url: url,
-          domain: host,
-          risk: "SUSPICIOUS",
-          score: 65,
-          trustScore: 35,
-          aiPrediction: "Suspicious",
-          mlRisk: "0.65",
-          module: "Blocklist",
-          time: Date.now(),
-          reasons: ["Blacklisted suspicious domain"],
-          modules: { phishing: 65, scam: 15, ai: 50, dark: 10, trust: 35 },
-          conf: 92
-        };
-        saveScanResult(scanResult);
-        chrome.runtime.sendMessage({ action: "updateBadge", risk: "SUSPICIOUS" });
-        if (controls.overlayAlerts) {
-          showOverlay(65, ["Blacklisted suspicious domain"]);
-        }
-        return;
-      }
-
-      // Initialize scores
-      let googleFlag = 0;
-      let ipqsScore = 0;
-      let vtScore = 0;
-      let localModuleScore = 0;
-      
-      let M5_score = 0;
-      let M6_score = 0;
-      let M7_score = 0;
-
-      let gsbFired = false;
-      let vtFired = false;
-      let whoisFired = false;
-      
-      let ipqsForceDangerous = false;
-      let ipqsForceSuspicious = false;
-      let vtForceDangerous = false;
-
-      const reasons = [];
-
-      // API 1: Google Safe Browsing
-      if (apiKeys.googleSafeBrowsing) {
-        try {
-          const gsbUrl = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${apiKeys.googleSafeBrowsing}`;
-          const gsbRes = await fetch(gsbUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              client: { clientId: "veritasai", clientVersion: "1.0" },
-              threatInfo: {
-                threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE"],
-                platformTypes: ["ANY_PLATFORM"],
-                threatEntryTypes: ["URL"],
-                threatEntries: [{ url: url }]
-              }
-            })
-          });
-          const gsbData = await gsbRes.json();
-          if (gsbData.matches && gsbData.matches.length > 0) {
-            googleFlag = 100;
-            gsbFired = true;
-            reasons.push("Google Safe Browsing: URL flagged as " + gsbData.matches[0].threatType);
+      // PART 3 — SMART 60 MINUTE CACHE
+      const cacheKey = "vc_" + host;
+      chrome.storage.local.get([cacheKey], async (cachedData) => {
+        const cacheEntry = cachedData[cacheKey];
+        if (cacheEntry && cacheEntry.timestamp && (Date.now() - cacheEntry.timestamp < 3600000)) {
+          const cachedResult = cacheEntry.result;
+          cachedResult.cached = true;
+          saveScanResult(cachedResult);
+          chrome.runtime.sendMessage({ action: "updateBadge", risk: cachedResult.risk });
+          if (cachedResult.risk !== "SAFE" && controls.overlayAlerts) {
+            showOverlay(cachedResult.score, cachedResult.reasons || ["Cached threat flag"]);
           }
-        } catch (e) {
-          console.error("VeritasShield: GSB API failed", e);
+          return;
         }
-      }
 
-      // API 2: IPQualityScore
-      if (apiKeys.ipQualityScore) {
+        // PART 4 — DANGEROUS AND SUSPICIOUS BLOCKLISTS
+        const isDangerousDomain = DANGEROUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
+        const isSuspiciousDomain = SUSPICIOUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
+
+        if (isDangerousDomain) {
+          const scanResult = {
+            url: url,
+            domain: host,
+            risk: "DANGEROUS",
+            score: 95,
+            trustScore: 5,
+            mlConfidence: "95%",
+            module: "Blocklist",
+            aiPrediction: "Malicious",
+            mlRisk: "High",
+            subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+            time: new Date().toISOString(),
+            cached: false,
+            reasons: ["Blacklisted dangerous domain"]
+          };
+          saveScanResult(scanResult);
+          saveToCache(host, scanResult);
+          chrome.runtime.sendMessage({ action: "updateBadge", risk: "DANGEROUS" });
+          if (controls.overlayAlerts) {
+            showOverlay(95, ["Blacklisted dangerous domain"]);
+          }
+          return;
+        }
+
+        if (isSuspiciousDomain) {
+          const scanResult = {
+            url: url,
+            domain: host,
+            risk: "SUSPICIOUS",
+            score: 65,
+            trustScore: 35,
+            mlConfidence: "65%",
+            module: "Blocklist",
+            aiPrediction: "Suspicious",
+            mlRisk: "Medium",
+            subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+            time: new Date().toISOString(),
+            cached: false,
+            reasons: ["Blacklisted suspicious domain"]
+          };
+          saveScanResult(scanResult);
+          saveToCache(host, scanResult);
+          chrome.runtime.sendMessage({ action: "updateBadge", risk: "SUSPICIOUS" });
+          if (controls.overlayAlerts) {
+            showOverlay(65, ["Blacklisted suspicious domain"]);
+          }
+          return;
+        }
+
+        // Run APIs concurrently using Promise.all with 3000ms timeout
+        let googleResult = null;
+        let ipqsResult = null;
+        let vtResult = null;
+        let whoisResult = null;
+
         try {
-          const ipqsUrl = `https://ipqualityscore.com/api/json/url/${apiKeys.ipQualityScore}/${encodeURIComponent(url)}`;
-          const ipqsRes = await fetch(ipqsUrl);
-          const ipqsData = await ipqsRes.json();
-          if (ipqsData.success) {
-            const fraudScore = ipqsData.fraud_score || 0;
-            ipqsScore = fraudScore;
-            if (fraudScore > 75) ipqsForceDangerous = true;
-            else if (fraudScore > 40) ipqsForceSuspicious = true;
+          const results = await Promise.all([
+            withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000),
+            withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000),
+            withTimeout(checkVirusTotal(url, VIRUSTOTAL_KEY), 3000),
+            withTimeout(checkWhoisAge(host, WHOIS_KEY), 3000)
+          ]);
+          googleResult = results[0];
+          ipqsResult = results[1];
+          vtResult = results[2];
+          whoisResult = results[3];
+        } catch (e) {
+          console.error("VeritasShield: concurrent scans failed", e);
+        }
 
-            if (ipqsData.phishing === true || ipqsData.malware === true) {
-              ipqsForceDangerous = true;
-              ipqsScore = 100;
+        const allApisFailed = (googleResult === null && ipqsResult === null && vtResult === null && whoisResult === null);
+        const reasons = [];
+
+        // Local Heuristics
+        let M5_score = 0;
+        let M6_score = 0;
+        let M7_score = 0;
+        let M8_score = 0;
+
+        // M5 Dark Pattern
+        if (modules.darkPattern) {
+          // Pre-ticked checkbox
+          const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+          let preTickedUnclicked = false;
+          checkboxes.forEach(cb => {
+            if (cb.dataset.veritasUserClicked !== "true") {
+              preTickedUnclicked = true;
             }
-            reasons.push("IPQualityScore: Fraud score " + fraudScore + " (Phishing: " + !!ipqsData.phishing + ", Malware: " + !!ipqsData.malware + ")");
+          });
+          if (preTickedUnclicked) {
+            M5_score += 15;
+            reasons.push("Dark Pattern: Pre-ticked checkbox not clicked by user detected");
           }
-        } catch (e) {
-          console.error("VeritasShield: IPQS API failed", e);
-        }
-      }
 
-      // API 3: VirusTotal
-      if (apiKeys.virusTotal) {
-        try {
-          // Calculate unpadded Base64 URL ID
-          let vtId = "";
+          // Hidden opt-outs
+          let hasHiddenOptOut = false;
           try {
-            const utf8Bytes = new TextEncoder().encode(url);
-            const binaryString = Array.from(utf8Bytes, byte => String.fromCharCode(byte)).join('');
-            vtId = btoa(binaryString).replace(/=/g, "");
-          } catch (e) {
-            vtId = btoa(url).replace(/=/g, "");
-          }
-
-          // Try GET to check if report is already cached
-          let vtRes = await fetch(`https://www.virustotal.com/api/v3/urls/${vtId}`, {
-            headers: { "x-apikey": apiKeys.virusTotal }
-          });
-
-          let positives = 0;
-          if (vtRes.status === 200) {
-            const vtData = await vtRes.json();
-            positives = vtData.data?.attributes?.last_analysis_stats?.malicious || 0;
-          } else if (vtRes.status === 404) {
-            // Fallback: Submit scan using POST
-            const scanRes = await fetch("https://www.virustotal.com/api/v3/urls", {
-              method: "POST",
-              headers: {
-                "x-apikey": apiKeys.virusTotal,
-                "Content-Type": "application/x-www-form-urlencoded"
-              },
-              body: `url=${encodeURIComponent(url)}`
-            });
-            if (scanRes.ok) {
-              const scanData = await scanRes.json();
-              const analysisId = scanData.data?.id;
-              if (analysisId) {
-                // Poll/Retrieve the analysis results
-                const analysisRes = await fetch(`https://www.virustotal.com/api/v3/analyses/${analysisId}`, {
-                  headers: { "x-apikey": apiKeys.virusTotal }
-                });
-                if (analysisRes.ok) {
-                  const analysisData = await analysisRes.json();
-                  positives = analysisData.data?.attributes?.stats?.malicious || 0;
-                }
+            const hiddenEl = Array.from(document.querySelectorAll('*')).find(el => {
+              const style = window.getComputedStyle(el);
+              const isHidden = style.display === 'none';
+              if (isHidden) {
+                const text = (el.innerText || el.textContent || "").toLowerCase();
+                return text.includes("opt-out") || text.includes("optout") || text.includes("unsubscribe");
               }
+              return false;
+            });
+            if (hiddenEl) {
+              hasHiddenOptOut = true;
+              M5_score += 15;
+              reasons.push("Dark Pattern: Hidden opt-out/unsubscribe text detected");
             }
-          }
+          } catch (e) {}
 
-          if (positives > 3) {
-            vtScore = 100;
-            vtForceDangerous = true;
-            vtFired = true;
-            reasons.push("VirusTotal: URL flagged as malicious by " + positives + " engines");
-          }
-        } catch (e) {
-          console.error("VeritasShield: VirusTotal API failed", e);
-        }
-      }
-
-      // API 4: Domain Age Check (WhoisXMLAPI)
-      let domainAgeFlag = 0;
-      if (apiKeys.whoisXml) {
-        try {
-          const whoisRes = await fetch(`https://domain-age-checker.whoisxmlapi.com/api/v1?apiKey=${apiKeys.whoisXml}&domainName=${host}`);
-          const whoisData = await whoisRes.json();
-          let ageInDays = whoisData.domainAge || whoisData.estimatedDomainAge || whoisData.WhoisRecord?.estimatedDomainAge;
-          const createdDateStr = whoisData.createdDate || whoisData.WhoisRecord?.createdDate;
-          if (ageInDays === undefined && createdDateStr) {
-            const createdTime = Date.parse(createdDateStr);
-            if (!isNaN(createdTime)) {
-              ageInDays = Math.floor((Date.now() - createdTime) / (1000 * 60 * 60 * 24));
-            }
-          }
-          if (ageInDays !== undefined && ageInDays < 30) {
-            domainAgeFlag = 30;
-            whoisFired = true;
-            reasons.push("Domain age: Registered less than 30 days ago (" + ageInDays + " days)");
-          }
-        } catch (e) {
-          console.error("VeritasShield: WhoisXMLAPI failed", e);
-        }
-      }
-
-      // Local Module 5: Dark Pattern
-      if (modules.darkPattern) {
-        // Pre-ticked checkboxes
-        const preTicked = document.querySelectorAll('input[type="checkbox"]:checked').length > 0;
-        if (preTicked) {
-          M5_score += 15;
-          reasons.push("Dark Pattern: Pre-ticked checkboxes detected");
-        }
-
-        // Hidden opt-outs
-        let hasHiddenOptOut = false;
-        try {
-          const hiddenEl = Array.from(document.querySelectorAll('*')).find(el => {
-            const style = window.getComputedStyle(el);
-            const isHidden = style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0';
-            if (isHidden) {
+          // Countdown timers
+          let hasTimer = false;
+          try {
+            const timerRegex = /\b\d+\s*(?:sec|min|hour|day|second|minute)/i;
+            const timerEl = Array.from(document.querySelectorAll('div, span, p, label, section, header')).find(el => {
               const text = (el.innerText || el.textContent || "").toLowerCase();
-              return text.includes("opt-out") || text.includes("optout") || text.includes("unsubscribe");
+              const hasTimePattern = timerRegex.test(text);
+              const hasTimerClassOrId = /\btimer\b|\bcount\b|\bexpiry\b/i.test(el.className + " " + el.id);
+              return hasTimePattern && hasTimerClassOrId;
+            });
+            if (timerEl) {
+              hasTimer = true;
+              M5_score += 15;
+              reasons.push("Dark Pattern: Countdown timer element detected");
             }
-            return false;
+          } catch (e) {}
+        }
+
+        // M6 SSL Check
+        const isHttp = location.protocol === "http:";
+        const hasPassword = !!document.querySelector('input[type="password"]');
+        const hasLoginForm = hasPassword || !!document.querySelector('form[action*="login"], form[id*="login"], form[class*="login"]');
+        if (isHttp) {
+          M6_score += 25;
+          reasons.push("SSL Check: HTTP connection");
+        }
+        if (hasLoginForm && !location.protocol.includes("https")) {
+          M6_score += 30;
+          reasons.push("SSL Check: Insecure login form without HTTPS");
+        }
+
+        // M7 Content NLP
+        if (modules.scam || modules.aiContent) {
+          const text = (document.body ? document.body.innerText : "").toLowerCase();
+          const scamPhrases = [
+            { phrase: "you have won", score: 10 },
+            { phrase: "claim now", score: 10 },
+            { phrase: "verify account", score: 10 },
+            { phrase: "urgent", score: 10 },
+            { phrase: "act immediately", score: 10 },
+            { phrase: "limited time offer", score: 10 },
+            { phrase: "congratulations you", score: 10 },
+            { phrase: "your account suspended", score: 10 },
+            { phrase: "click here to claim", score: 10 },
+            { phrase: "free gift", score: 10 }
+          ];
+          scamPhrases.forEach(p => {
+            if (text.includes(p.phrase)) {
+              M7_score += p.score;
+              reasons.push("Content NLP: Detected scam phrase '" + p.phrase + "'");
+            }
           });
-          if (hiddenEl) {
-            hasHiddenOptOut = true;
-            M5_score += 15;
-            reasons.push("Dark Pattern: Hidden opt-out/unsubscribe options found");
-          }
-        } catch (e) {}
+        }
 
-        // Countdown timers
-        let hasTimer = false;
-        try {
-          const timerRegex = /\b\d+\s*(?:sec|min|hour|day|second|minute)/i;
-          const timerEl = Array.from(document.querySelectorAll('div, span, p, label, section, header')).find(el => {
-            const text = (el.innerText || el.textContent || "").toLowerCase();
-            const hasTimePattern = timerRegex.test(text);
-            const hasTimerClassOrId = /\btimer\b|\bcount\b|\bexpiry\b/i.test(el.className + " " + el.id);
-            return hasTimePattern && hasTimerClassOrId;
-          });
-          if (timerEl) {
-            hasTimer = true;
-            M5_score += 15;
-            reasons.push("Dark Pattern: Urgent countdown timers detected");
-          }
-        } catch (e) {}
-      }
+        // M8 URL Pattern Analysis
+        const isIpAddress = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(host) || host.includes("[");
+        if (isIpAddress) {
+          M8_score += 30;
+          reasons.push("URL Analysis: IP address used instead of domain name");
+        }
+        const hyphenCount = (host.match(/-/g) || []).length;
+        if (hyphenCount > 2) {
+          M8_score += 15;
+          reasons.push("URL Analysis: Domain has excessive hyphens");
+        }
+        const isSuspiciousTld = /\.(xyz|tk|ml|ga|cf|click|top|gq|pw|work)$/i.test(host);
+        if (isSuspiciousTld) {
+          M8_score += 20;
+          reasons.push("URL Analysis: Domain uses highly suspicious TLD");
+        }
+        if (host.length > 30) {
+          M8_score += 10;
+          reasons.push("URL Analysis: Domain name length exceeds 30 characters");
+        }
+        const isMixedBrand = /(?:paypa1|amaz0n|g00gle|micr0soft|github1|app1e|faceb00k|netf1ix|sp0tify)/i.test(host);
+        if (isMixedBrand) {
+          M8_score += 35;
+          reasons.push("URL Analysis: Brand name homoglyph detected");
+        }
 
-      // Local Module 6: Insecure Connection SSL Check
-      const isHttp = location.protocol === "http:";
-      if (isHttp) {
-        M6_score = 25;
-        reasons.push("Insecure connection: Page does not use SSL (HTTP)");
-      }
+        const localScore = M5_score + M6_score + M7_score + M8_score;
 
-      // Local Module 7: Content NLP scam keywords
-      if (modules.scam || modules.aiContent) {
-        const text = (document.body ? document.body.innerText : "").toLowerCase();
-        const scamPhrases = ["you have won", "claim now", "verify account", "urgent", "act immediately", "limited time"];
-        scamPhrases.forEach(phrase => {
-          if (text.includes(phrase)) {
-            M7_score += 10;
-            reasons.push("Content NLP: Detected scam keyword/phrase '" + phrase + "'");
-          }
-        });
-      }
+        let threatScore = 0;
+        let mlConfidence = "";
 
-      localModuleScore = M5_score + M6_score + M7_score;
+        // API Scores
+        const googleFlag = (googleResult && googleResult.matched) ? 100 : 0;
+        const ipqsScore = ipqsResult ? (ipqsResult.fraud_score || 0) : 0;
+        const vtScore = vtResult ? (vtResult.malicious > 3 ? 100 : vtResult.malicious * 20) : 0;
+        const domainAgeFlag = (whoisResult && whoisResult.age < 30) ? 30 : 0;
 
-      // Local Module 8: Trust Engine (composite calculation)
-      const baseScore = (googleFlag * 0.25 + ipqsScore * 0.40 + vtScore * 0.35);
-      
-      // Calculate final composite score
-      let threatScore = baseScore + localModuleScore;
-      if (gsbFired) {
-        threatScore += 40;
-      }
-      if (whoisFired) {
-        threatScore += 30;
-      }
+        if (allApisFailed) {
+          threatScore = localScore;
+          mlConfidence = "Local scan";
+          reasons.push("Fallback: Offline or APIs timed out. Local analysis active.");
+        } else {
+          const baseScore = (googleFlag * 0.25) + (ipqsScore * 0.40) + (vtScore * 0.35);
+          threatScore = baseScore + localScore + domainAgeFlag;
+          threatScore = Math.min(100, Math.round(threatScore));
+          mlConfidence = Math.round(threatScore) + "%";
+        }
 
-      // Cap final threatScore at 100
-      threatScore = Math.min(100, threatScore);
+        // Cap score
+        threatScore = Math.min(100, threatScore);
+        const trustScore = 100 - threatScore;
 
-      // Determine final risk rating and enforce thresholds
-      let risk = "SAFE";
-      if (threatScore > 70 || ipqsForceDangerous || vtForceDangerous) {
-        risk = "DANGEROUS";
-        threatScore = Math.max(75, threatScore);
-      } else if (threatScore > 35 || ipqsForceSuspicious) {
-        risk = "SUSPICIOUS";
-        threatScore = Math.max(40, threatScore);
-      }
+        // Determine final risk rating
+        let risk = "SAFE";
+        const gsbMatched = (googleResult && googleResult.matched);
+        const ipqsPhish = (ipqsResult && ipqsResult.phishing === true);
+        const ipqsMalware = (ipqsResult && ipqsResult.malware === true);
+        const vtMalicious = (vtResult && vtResult.malicious > 3);
 
-      const trustScore = Math.max(0, 100 - threatScore);
+        if (gsbMatched || ipqsPhish || ipqsMalware || vtMalicious || threatScore > 70) {
+          risk = "DANGEROUS";
+        } else if ((ipqsResult && ipqsResult.fraud_score > 40) || threatScore > 35) {
+          risk = "SUSPICIOUS";
+        }
 
-      // Map dynamic module
-      let moduleName = "Trust Engine";
-      if (isDangerousDomain || isSuspiciousDomain) {
-        moduleName = "Blocklist";
-      } else if (gsbFired) {
-        moduleName = "Phishing URL";
-      } else if (vtFired) {
-        moduleName = "Malware Detection";
-      } else if (whoisFired) {
-        moduleName = "New Domain — High Risk";
-      } else if (M6_score > 0) {
-        moduleName = "SSL Check";
-      } else if (M7_score > 0) {
-        moduleName = "Content NLP";
-      } else if (M5_score > 0) {
-        moduleName = "Dark Pattern";
-      }
+        // Module Name Selection (Part 8)
+        let moduleName = "Trust Engine";
+        if (gsbMatched) moduleName = "Phishing URL";
+        else if (vtMalicious) moduleName = "Malware Detection";
+        else if (ipqsPhish) moduleName = "Scam Pattern";
+        else if (whoisResult && whoisResult.age < 30) moduleName = "New Domain — High Risk";
+        else if (M6_score > 0) moduleName = "SSL Check";
+        else if (M7_score > 0) moduleName = "Content NLP";
+        else if (M5_score > 0) moduleName = "Dark Pattern";
+        else if (M8_score > 0) moduleName = "URL Analysis";
 
-      if (reasons.length === 0) {
-        reasons.push("No malicious indicators detected");
-      }
+        const scanResult = {
+          url: url,
+          domain: host,
+          risk: risk,
+          score: threatScore,
+          trustScore: trustScore,
+          mlConfidence: mlConfidence,
+          module: moduleName,
+          aiPrediction: risk === "DANGEROUS" ? "Malicious" : risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
+          mlRisk: threatScore > 70 ? "High" : threatScore > 35 ? "Medium" : "Low",
+          subScores: {
+            google: googleFlag,
+            ipqs: ipqsScore,
+            virustotal: vtScore,
+            domainAge: domainAgeFlag,
+            local: localScore
+          },
+          time: new Date().toISOString(),
+          cached: false,
+          reasons: reasons
+        };
 
-      const scanResult = {
-        url: url,
-        domain: host,
-        risk: risk,
-        score: Math.round(threatScore),
-        trustScore: Math.round(trustScore),
-        aiPrediction: risk === "DANGEROUS" ? "Malicious" : risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
-        mlRisk: (threatScore / 100).toFixed(2),
-        module: moduleName,
-        time: Date.now(),
-        reasons: reasons,
-        modules: {
-          phishing: gsbFired ? 100 : (risk === "DANGEROUS" ? 90 : risk === "SUSPICIOUS" ? 50 : 10),
-          scam: M7_score > 0 ? 80 : (risk === "DANGEROUS" ? 60 : 15),
-          ai: Math.round(threatScore * 0.8),
-          dark: M5_score > 0 ? 80 : 10,
-          trust: Math.round(trustScore)
-        },
-        conf: Math.round(threatScore)
-      };
+        saveScanResult(scanResult);
+        saveToCache(host, scanResult);
 
-      saveScanResult(scanResult);
+        // Update Dynamic Badge
+        chrome.runtime.sendMessage({ action: "updateBadge", risk: risk });
 
-      // Send update message to background badge
-      chrome.runtime.sendMessage({ action: "updateBadge", risk: risk });
-
-      // Respect Overlay Alerts
-      if (risk !== "SAFE" && controls.overlayAlerts) {
-        showOverlay(Math.round(threatScore), reasons);
-      }
+        if (risk !== "SAFE" && controls.overlayAlerts) {
+          showOverlay(threatScore, reasons);
+        }
+      });
     });
   }
 
   function saveScanResult(scanResult) {
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
-      // Remove duplicate for same url
       const filtered = scanHistory.filter(h => h.url !== scanResult.url);
-      const updated = [scanResult, ...filtered].slice(0, 50);
+      const updated = [scanResult, ...filtered].slice(0, 500);
       chrome.storage.local.set({ scanHistory: updated });
-      localStorage.setItem("veritasai_scans", JSON.stringify(updated));
-      window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(updated) }));
+      if (window.location.href.includes("veritasai-shield.vercel.app") || window.location.href.includes("localhost:") || window.location.href.includes("127.0.0.1:")) {
+        localStorage.setItem("veritasai_scans", JSON.stringify(updated));
+        window.dispatchEvent(new StorageEvent("storage", { key: "veritasai_scans", newValue: JSON.stringify(updated) }));
+      }
+    });
+  }
+
+  function saveToCache(domain, scanResult) {
+    const cacheKey = "vc_" + domain;
+    chrome.storage.local.set({
+      [cacheKey]: {
+        result: scanResult,
+        timestamp: Date.now()
+      }
     });
   }
 
