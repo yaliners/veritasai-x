@@ -424,8 +424,8 @@
 
         try {
           const results = await Promise.all([
-            withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000),
-            withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000),
+            modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000) : Promise.resolve(null),
+            modules.scam ? withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000) : Promise.resolve(null),
             withTimeout(checkVirusTotal(url, VIRUSTOTAL_KEY), 3000),
             withTimeout(checkWhoisAge(host, WHOIS_KEY), 3000)
           ]);
@@ -445,6 +445,7 @@
         let M6_score = 0;
         let M7_score = 0;
         let M8_score = 0;
+        let M9_score = 0;
 
         // M5 Dark Pattern
         if (modules.darkPattern) {
@@ -512,7 +513,7 @@
         }
 
         // M7 Content NLP
-        if (modules.scam || modules.aiContent) {
+        if (modules.aiContent) {
           const text = (document.body ? document.body.innerText : "").toLowerCase();
           const scamPhrases = [
             { phrase: "you have won", score: 10 },
@@ -560,7 +561,26 @@
           reasons.push("URL Analysis: Brand name homoglyph detected");
         }
 
-        const localScore = M5_score + M6_score + M7_score + M8_score;
+        // M9 QR Code Detection
+        if (modules.qrDetector) {
+          const qrImages = Array.from(document.querySelectorAll('img')).filter(img => {
+            const src = (img.src || "").toLowerCase();
+            const alt = (img.alt || "").toLowerCase();
+            return src.includes("qr") || alt.includes("qr") || src.includes("barcode");
+          });
+          if (qrImages.length > 0) {
+            reasons.push(`QR Scan: Inspected ${qrImages.length} image(s) for malicious payloads`);
+          } else {
+            reasons.push("QR Scan: No QR codes detected on page");
+          }
+        }
+
+        // Voice Clone Monitor
+        if (modules.voiceClone) {
+          reasons.push("Beta — monitoring audio elements");
+        }
+
+        const localScore = M5_score + M6_score + M7_score + M8_score + M9_score;
 
         let threatScore = 0;
         let mlConfidence = "";

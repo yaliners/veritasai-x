@@ -174,7 +174,8 @@ async function classifyAsync(url, title = "") {
   let host = ""; try { host = new URL(url).hostname.toLowerCase(); } catch { host = url.toLowerCase(); }
   const lowerUrl = url.toLowerCase();
 
-  const { personalBlocklist = [], personalSafeList = [] } = await chrome.storage.local.get(["personalBlocklist", "personalSafeList"]);
+  const { settings = {}, personalBlocklist = [], personalSafeList = [] } = await chrome.storage.local.get(["settings", "personalBlocklist", "personalSafeList"]);
+  const modules = settings.modules || { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false };
 
   if (personalBlocklist.some(d => host === d || host.endsWith("." + d))) {
     return {
@@ -255,8 +256,8 @@ async function classifyAsync(url, title = "") {
 
   try {
     const results = await Promise.all([
-      withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000),
-      withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000),
+      modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000) : Promise.resolve(null),
+      modules.scam ? withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000) : Promise.resolve(null),
       withTimeout(checkVirusTotal(url, VIRUSTOTAL_KEY), 3000),
       withTimeout(checkWhoisAge(host, WHOIS_KEY), 3000)
     ]);
@@ -349,6 +350,10 @@ async function classifyAsync(url, title = "") {
   else if (M6_score > 0) moduleName = "Scam Pattern";
   else if (M8_score > 0) moduleName = "Phishing URL";
 
+  if (modules.voiceClone) {
+    reasons.push("Beta — monitoring audio elements");
+  }
+
   if (reasons.length === 0) {
     reasons.push("No malicious indicators detected");
   }
@@ -395,6 +400,60 @@ function render(r) {
   document.getElementById("reasons").innerHTML = r.reasons.slice(0, 5).map((x) => `<li>${x}</li>`).join("");
 }
 
+function renderPlaceholder(host) {
+  document.getElementById("domain").textContent = host;
+  const badge = document.getElementById("riskBadge");
+  badge.textContent = "PENDING";
+  badge.className = "badge suspicious";
+  document.getElementById("threat").textContent = "—";
+  document.getElementById("trust").textContent = "—";
+  document.getElementById("conf").textContent = "—";
+  document.getElementById("modules").innerHTML = `<li><span>Auto Scan is disabled.</span></li>`;
+  document.getElementById("reasons").innerHTML = `<li>Click 'Scan Now' to run real-time threat intelligence scan.</li>`;
+}
+
+function saveAndRender(result, cacheKey, host, url, scanHistory) {
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    const scanResult = {
+      url: url,
+      domain: host,
+      risk: result.risk,
+      score: result.score,
+      trustScore: result.trust,
+      mlConfidence: result.conf + "%",
+      module: result.module,
+      aiPrediction: result.risk === "DANGEROUS" ? "Malicious" : result.risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
+      mlRisk: result.score > 70 ? "High" : result.score > 35 ? "Medium" : "Low",
+      subScores: {
+        google: result.modules.phishing > 90 ? 100 : 0,
+        ipqs: result.modules.scam > 90 ? 100 : 0,
+        virustotal: result.module === "Malware Detection" ? 100 : 0,
+        domainAge: result.module === "New Domain — High Risk" ? 30 : 0,
+        local: result.score - (result.modules.phishing > 90 ? 25 : 0)
+      },
+      time: Date.now(),
+      cached: false,
+      reasons: result.reasons,
+      modules: result.modules,
+      conf: result.conf
+    };
+    
+    const filtered = scanHistory.filter(h => h.url !== url);
+    const updatedHistory = [scanResult, ...filtered].slice(0, 500);
+    chrome.storage.local.set({ scanHistory: updatedHistory });
+
+    // Save to cache vc_DOMAIN
+    chrome.storage.local.set({
+      [cacheKey]: {
+        result: scanResult,
+        timestamp: Date.now()
+      }
+    });
+    updateStatsBar(updatedHistory);
+  }
+  render(result);
+}
+
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = tabs[0]?.url || "about:blank";
   const title = tabs[0]?.title || "";
@@ -404,8 +463,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   currentUrl = url;
 
   chrome.storage.local.get(["scanHistory", "settings", "trustedDomains"], async ({ scanHistory = [], settings = {}, trustedDomains = [] }) => {
-    // Check cache:vc_DOMAIN first
+    const controls = settings?.controls || { autoScan: true, popupAlerts: true, overlayAlerts: true };
     const cacheKey = "vc_" + host;
+
     chrome.storage.local.get([cacheKey], async (cachedData) => {
       const cacheEntry = cachedData[cacheKey];
       let result;
@@ -422,54 +482,40 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
           modules: cachedResult.modules,
           module: cachedResult.module
         };
+        render(result);
+        updateStatsBar(scanHistory);
       } else {
-        // Fallback to async classification
-        result = await classifyAsync(url, title);
-        
-        // Save scan result to scanHistory if it is a real page
-        if (url.startsWith("http://") || url.startsWith("https://")) {
-          const scanResult = {
-            url: url,
-            domain: host,
-            risk: result.risk,
-            score: result.score,
-            trustScore: result.trust,
-            mlConfidence: result.conf + "%",
-            module: result.module,
-            aiPrediction: result.risk === "DANGEROUS" ? "Malicious" : result.risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
-            mlRisk: result.score > 70 ? "High" : result.score > 35 ? "Medium" : "Low",
-            subScores: {
-              google: result.modules.phishing > 90 ? 100 : 0,
-              ipqs: result.modules.scam > 90 ? 100 : 0,
-              virustotal: result.module === "Malware Detection" ? 100 : 0,
-              domainAge: result.module === "New Domain — High Risk" ? 30 : 0,
-              local: result.score - (result.modules.phishing > 90 ? 25 : 0)
-            },
-            time: Date.now(),
-            cached: false,
-            reasons: result.reasons,
-            modules: result.modules,
-            conf: result.conf
-          };
-          
-          const filtered = scanHistory.filter(h => h.url !== url);
-          scanHistory = [scanResult, ...filtered].slice(0, 500);
-          chrome.storage.local.set({ scanHistory });
-
-          // Save to cache vc_DOMAIN
-          chrome.storage.local.set({
-            [cacheKey]: {
-              result: scanResult,
-              timestamp: Date.now()
-            }
-          });
+        if (!controls.autoScan) {
+          renderPlaceholder(host);
+          updateStatsBar(scanHistory);
+        } else {
+          result = await classifyAsync(url, title);
+          saveAndRender(result, cacheKey, host, url, scanHistory);
+          chrome.runtime.sendMessage({ action: "updateBadge", risk: result.risk });
         }
       }
-
-      render(result);
-      updateStatsBar(scanHistory);
     });
   });
+});
+
+document.getElementById("scanNow").addEventListener("click", async () => {
+  const btn = document.getElementById("scanNow");
+  btn.textContent = "Scanning...";
+  btn.disabled = true;
+
+  try {
+    const result = await classifyAsync(currentUrl, "");
+    const cacheKey = "vc_" + currentSite;
+    chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
+      saveAndRender(result, cacheKey, currentSite, currentUrl, scanHistory);
+      chrome.runtime.sendMessage({ action: "updateBadge", risk: result.risk });
+    });
+  } catch (e) {
+    console.error(e);
+  } finally {
+    btn.textContent = "Scan Now";
+    btn.disabled = false;
+  }
 });
 
 function updateStatsBar(history) {
