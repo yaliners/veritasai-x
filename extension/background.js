@@ -65,20 +65,31 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message.action === "updateBadge" && sender.tab) {
-    const tabId = sender.tab.id;
-    if (message.risk === "DANGEROUS") {
-      chrome.action.setBadgeBackgroundColor({ tabId, color: "#EF4444" });
-      chrome.action.setBadgeText({ tabId, text: "DNG" });
-    } else if (message.risk === "SUSPICIOUS") {
-      chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" });
-      chrome.action.setBadgeText({ tabId, text: "SPC" });
-    } else if (message.risk === "TRUSTED") {
-      chrome.action.setBadgeBackgroundColor({ tabId, color: "#06B6D4" });
-      chrome.action.setBadgeText({ tabId, text: "✓" });
+  if (message.action === "updateBadge") {
+    const handleUpdate = (tabId) => {
+      if (message.risk === "DANGEROUS") {
+        chrome.action.setBadgeBackgroundColor({ tabId, color: "#EF4444" });
+        chrome.action.setBadgeText({ tabId, text: "DNG" });
+      } else if (message.risk === "SUSPICIOUS") {
+        chrome.action.setBadgeBackgroundColor({ tabId, color: "#F59E0B" });
+        chrome.action.setBadgeText({ tabId, text: "SPC" });
+      } else if (message.risk === "TRUSTED") {
+        chrome.action.setBadgeBackgroundColor({ tabId, color: "#06B6D4" });
+        chrome.action.setBadgeText({ tabId, text: "✓" });
+      } else {
+        chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" });
+        chrome.action.setBadgeText({ tabId, text: "OK" });
+      }
+    };
+
+    if (sender.tab) {
+      handleUpdate(sender.tab.id);
     } else {
-      chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" });
-      chrome.action.setBadgeText({ tabId, text: "OK" });
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+          handleUpdate(tabs[0].id);
+        }
+      });
     }
   }
 });

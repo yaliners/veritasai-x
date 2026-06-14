@@ -3,6 +3,9 @@ const IPQS_KEY = "sYnwTP8nMlIBGLK8dCXbUyDQEwQSXCiO";
 const VIRUSTOTAL_KEY = "f50bfa739b08364404699b51bc26f326b2923a20222007b179e8b2b048a486e8";
 const WHOIS_KEY = "at_XlkBiABAXaNSHT8KMsLEGgnssnVc2";
 
+let currentSite = "";
+let currentUrl = "";
+
 const PERMANENT_SAFE = [
   "google.com", "youtube.com", "github.com",
   "microsoft.com", "apple.com", "amazon.com",
@@ -170,6 +173,34 @@ async function checkWhoisAge(domain, key) {
 async function classifyAsync(url, title = "") {
   let host = ""; try { host = new URL(url).hostname.toLowerCase(); } catch { host = url.toLowerCase(); }
   const lowerUrl = url.toLowerCase();
+
+  const { personalBlocklist = [], personalSafeList = [] } = await chrome.storage.local.get(["personalBlocklist", "personalSafeList"]);
+
+  if (personalBlocklist.some(d => host === d || host.endsWith("." + d))) {
+    return {
+      host,
+      risk: "DANGEROUS",
+      score: 95,
+      trust: 5,
+      conf: 95,
+      reasons: ["User reported dangerous domain"],
+      modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
+      module: "User Reported"
+    };
+  }
+
+  if (personalSafeList.some(d => host === d || host.endsWith("." + d))) {
+    return {
+      host,
+      risk: "SAFE",
+      score: 0,
+      trust: 100,
+      conf: 100,
+      reasons: ["User verified safe domain"],
+      modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
+      module: "User Verified"
+    };
+  }
 
   // 1. Permanent safe list check
   const isPermanentSafe = PERMANENT_SAFE.some(d => host === d || host.endsWith("." + d));
@@ -369,6 +400,8 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const title = tabs[0]?.title || "";
   let host = "about:blank";
   try { host = new URL(url).hostname; } catch {}
+  currentSite = host;
+  currentUrl = url;
 
   chrome.storage.local.get(["scanHistory", "settings", "trustedDomains"], async ({ scanHistory = [], settings = {}, trustedDomains = [] }) => {
     // Check cache:vc_DOMAIN first
@@ -451,4 +484,124 @@ function updateStatsBar(history) {
 
 document.getElementById("openDash").addEventListener("click", () => {
   chrome.tabs.create({ url: "https://veritasai-shield.vercel.app/dashboard" });
+});
+
+document.getElementById("reportDangerous").addEventListener("click", () => {
+  chrome.storage.local.get(["personalBlocklist", "scanHistory"], ({ personalBlocklist = [], scanHistory = [] }) => {
+    if (!personalBlocklist.includes(currentSite)) {
+      personalBlocklist.push(currentSite);
+    }
+    chrome.storage.local.set({ personalBlocklist }, () => {
+      const scanResult = {
+        host: currentSite,
+        risk: "DANGEROUS",
+        score: 95,
+        trust: 5,
+        conf: 95,
+        reasons: ["User reported dangerous domain"],
+        modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
+        module: "User Reported"
+      };
+      render(scanResult);
+
+      if (currentUrl.startsWith("http://") || currentUrl.startsWith("https://")) {
+        const cacheKey = "vc_" + currentSite;
+        const historyScanResult = {
+          url: currentUrl,
+          domain: currentSite,
+          risk: "DANGEROUS",
+          score: 95,
+          trustScore: 5,
+          mlConfidence: "95%",
+          module: "User Reported",
+          aiPrediction: "Malicious",
+          mlRisk: "High",
+          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          time: Date.now(),
+          cached: false,
+          reasons: ["User reported dangerous domain"],
+          modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
+          conf: 95
+        };
+        const filtered = scanHistory.filter(h => h.url !== currentUrl);
+        const updatedHistory = [historyScanResult, ...filtered].slice(0, 500);
+        chrome.storage.local.set({ scanHistory: updatedHistory });
+        chrome.storage.local.set({
+          [cacheKey]: {
+            result: historyScanResult,
+            timestamp: Date.now()
+          }
+        });
+        updateStatsBar(updatedHistory);
+      }
+
+      const btn = document.getElementById("reportDangerous");
+      btn.textContent = "Marked as dangerous ✓";
+      setTimeout(() => {
+        btn.textContent = "🚨 Report Dangerous";
+      }, 2000);
+
+      chrome.runtime.sendMessage({ action: "updateBadge", risk: "DANGEROUS" });
+    });
+  });
+});
+
+document.getElementById("reportSafe").addEventListener("click", () => {
+  chrome.storage.local.get(["personalSafeList", "scanHistory"], ({ personalSafeList = [], scanHistory = [] }) => {
+    if (!personalSafeList.includes(currentSite)) {
+      personalSafeList.push(currentSite);
+    }
+    chrome.storage.local.set({ personalSafeList }, () => {
+      const scanResult = {
+        host: currentSite,
+        risk: "SAFE",
+        score: 0,
+        trust: 100,
+        conf: 100,
+        reasons: ["User verified safe domain"],
+        modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
+        module: "User Verified"
+      };
+      render(scanResult);
+
+      if (currentUrl.startsWith("http://") || currentUrl.startsWith("https://")) {
+        const cacheKey = "vc_" + currentSite;
+        const historyScanResult = {
+          url: currentUrl,
+          domain: currentSite,
+          risk: "SAFE",
+          score: 0,
+          trustScore: 100,
+          mlConfidence: "100%",
+          module: "User Verified",
+          aiPrediction: "Benign",
+          mlRisk: "Low",
+          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          time: Date.now(),
+          cached: false,
+          reasons: ["User verified safe domain"],
+          modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
+          conf: 100
+        };
+        const filtered = scanHistory.filter(h => h.url !== currentUrl);
+        const updatedHistory = [historyScanResult, ...filtered].slice(0, 500);
+        chrome.storage.local.set({ scanHistory: updatedHistory });
+        chrome.storage.local.set({
+          [cacheKey]: {
+            result: historyScanResult,
+            timestamp: Date.now()
+          }
+        });
+        updateStatsBar(updatedHistory);
+      }
+
+      const btn = document.getElementById("reportSafe");
+      btn.textContent = "Marked as safe ✓";
+      setTimeout(() => {
+        btn.textContent = "✅ Report Safe";
+      }, 2000);
+
+      chrome.runtime.sendMessage({ action: "updateBadge", risk: "SAFE" });
+    });
+  });
 });

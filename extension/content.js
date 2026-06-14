@@ -259,7 +259,7 @@
       controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
     };
 
-    chrome.storage.local.get(["settings", "trustedDomains"], async ({ settings = DEFAULT_SETTINGS, trustedDomains = [] }) => {
+    chrome.storage.local.get(["settings", "trustedDomains", "personalBlocklist", "personalSafeList"], async ({ settings = DEFAULT_SETTINGS, trustedDomains = [], personalBlocklist = [], personalSafeList = [] }) => {
       const modules = settings?.modules || DEFAULT_SETTINGS.modules;
       const controls = settings?.controls || DEFAULT_SETTINGS.controls;
 
@@ -270,6 +270,55 @@
 
       // 2. Bypass scanning for whitelisted trusted domains
       let host = ""; try { host = new URL(url).hostname.toLowerCase(); } catch {}
+
+      // Check personalBlocklist and personalSafeList first
+      const isUserBlocked = personalBlocklist.some(d => host === d || host.endsWith("." + d));
+      if (isUserBlocked) {
+        const blockResult = {
+          url: url,
+          domain: host,
+          risk: "DANGEROUS",
+          score: 95,
+          trustScore: 5,
+          mlConfidence: "95%",
+          module: "User Reported",
+          aiPrediction: "Malicious",
+          mlRisk: "High",
+          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          time: Date.now(),
+          cached: false,
+          reasons: ["User reported dangerous domain"]
+        };
+        saveScanResult(blockResult);
+        chrome.runtime.sendMessage({ action: "updateBadge", risk: "DANGEROUS" });
+        if (controls.overlayAlerts) {
+          showOverlay(95, ["User reported dangerous domain"]);
+        }
+        return;
+      }
+
+      const isUserSafe = personalSafeList.some(d => host === d || host.endsWith("." + d));
+      if (isUserSafe) {
+        const safeResult = {
+          url: url,
+          domain: host,
+          risk: "SAFE",
+          score: 0,
+          trustScore: 100,
+          mlConfidence: "100%",
+          module: "User Verified",
+          aiPrediction: "Benign",
+          mlRisk: "Low",
+          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          time: Date.now(),
+          cached: false,
+          reasons: ["User verified safe domain"]
+        };
+        saveScanResult(safeResult);
+        chrome.runtime.sendMessage({ action: "updateBadge", risk: "SAFE" });
+        return;
+      }
+
       const isWhitelisted = trustedDomains.some((d) => host === d || host.endsWith("." + d));
       if (isWhitelisted) {
         return; 
