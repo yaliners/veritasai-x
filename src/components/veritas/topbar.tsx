@@ -1,4 +1,4 @@
-import { Activity, Search, Bell, X } from "lucide-react";
+import { Activity, Search, Bell, X, Menu } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
 interface TopbarProps {
@@ -27,10 +27,20 @@ export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notif
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-4 border-b border-border/60 bg-background/70 px-4 py-4 backdrop-blur-xl lg:px-8">
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">VeritasShield AI</p>
-        <h1 className="text-xl font-bold tracking-tight">{title}</h1>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu Button */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("veritas-toggle-sidebar"))}
+          className="flex lg:hidden h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-[#0F172A] text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Toggle Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">VeritasShield AI</p>
+          <h1 className="text-xl font-bold tracking-tight text-lg sm:text-xl">{title}</h1>
+          {subtitle && <p className="text-[10px] sm:text-xs text-muted-foreground">{subtitle}</p>}
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <div className="hidden md:flex items-center gap-2 rounded-lg border border-border/60 bg-card/40 px-3 py-1.5">
@@ -48,7 +58,7 @@ export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notif
           </span>
           ENGINE LIVE
         </div>
-        <div className="relative" ref={notifRef}>
+        <div className="relative hidden md:block" ref={notifRef}>
           <button
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"
@@ -84,7 +94,7 @@ export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notif
             </div>
           )}
         </div>
-        <button className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/40 text-cyber-cyan">
+        <button className="hidden md:flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/40 text-cyber-cyan">
           <Activity className="h-4 w-4" />
         </button>
       </div>

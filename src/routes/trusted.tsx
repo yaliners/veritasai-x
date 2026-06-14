@@ -133,9 +133,9 @@ function TrustedManager() {
                   <thead>
                     <tr className="border-b border-border/60 text-left text-[10px] uppercase tracking-wider text-muted-foreground">
                       <th className="pb-2">Domain</th>
-                      <th className="pb-2">Category</th>
+                      <th className="pb-2 hidden md:table-cell">Category</th>
                       <th className="pb-2">Trust Level</th>
-                      <th className="pb-2">Date Added</th>
+                      <th className="pb-2 hidden md:table-cell">Date Added</th>
                       <th className="pb-2 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -143,15 +143,15 @@ function TrustedManager() {
                     {filtered.map((s) => (
                       <tr key={s.id} className="border-b border-border/30 last:border-0">
                         <td className="py-3">
-                          <div className="flex items-center gap-2 mono text-xs">
-                            <ShieldCheck className="h-3.5 w-3.5 text-cyber-success" /> {s.domain}
+                          <div className="flex items-center gap-2 mono text-xs truncate max-w-[120px] sm:max-w-[240px] md:max-w-[320px]">
+                            <ShieldCheck className="h-3.5 w-3.5 text-cyber-success shrink-0" /> {s.domain}
                           </div>
                         </td>
-                        <td className="text-xs text-muted-foreground">{s.category}</td>
+                        <td className="text-xs text-muted-foreground hidden md:table-cell">{s.category}</td>
                         <td>
                           <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${levelCls[s.trustLevel]}`}>{s.trustLevel}</span>
                         </td>
-                        <td className="text-xs text-muted-foreground">{new Date(s.addedAt).toLocaleDateString()}</td>
+                        <td className="text-xs text-muted-foreground hidden md:table-cell">{new Date(s.addedAt).toLocaleDateString()}</td>
                         <td className="text-right">
                           <button onClick={() => remove(s.id)} className="inline-flex items-center gap-1 rounded-md border border-cyber-danger/40 bg-cyber-danger/10 px-2 py-1 text-[10px] font-semibold text-cyber-danger hover:bg-cyber-danger/20">
                             <Trash2 className="h-3 w-3" /> Remove

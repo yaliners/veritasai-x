@@ -93,7 +93,7 @@ function AnalyticsCenter() {
           <EmptyState isInstalled={isExtensionInstalled} />
         ) : (
           <>
-            <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+            <section className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard label="Total Scans" value={total} icon={Shield} accent="cyan" />
               <StatCard label="Dangerous" value={counts.DANGEROUS} icon={ShieldX} accent="danger" />
               <StatCard label="Suspicious" value={counts.SUSPICIOUS} icon={ShieldAlert} accent="warning" />

@@ -93,7 +93,7 @@ function ThreatCenter() {
   return (
     <>
       <Topbar title="Threat Intelligence Center" subtitle="Forensic database with XAI explainability" />
-      <main className="flex flex-1 gap-6 p-4 lg:p-8">
+      <main className="flex flex-col lg:flex-row flex-1 gap-6 p-4 lg:p-8">
         {threats.length === 0 || !isExtensionInstalled ? (
           <div className="glass flex-1 rounded-2xl p-6 shadow-[var(--shadow-card)] flex items-center justify-center">
             <EmptyState isInstalled={isExtensionInstalled} />
@@ -129,11 +129,11 @@ function ThreatCenter() {
                     <th className="pb-2 w-8"></th>
                     <th className="pb-2">Website</th>
                     <th className="pb-2">Risk</th>
-                    <th className="pb-2">Severity</th>
+                    <th className="pb-2 hidden md:table-cell">Severity</th>
                     <th className="pb-2">Score</th>
-                    <th className="pb-2">Trust</th>
-                    <th className="pb-2">Module</th>
-                    <th className="pb-2">Time</th>
+                    <th className="pb-2 hidden md:table-cell">Trust</th>
+                    <th className="pb-2 hidden md:table-cell">Module</th>
+                    <th className="pb-2 hidden md:table-cell">Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -149,13 +149,13 @@ function ThreatCenter() {
                             className={`h-4 w-4 transition-transform ${expandedId === t.id ? "rotate-180" : ""}`}
                           />
                         </td>
-                        <td className="py-3 mono text-xs truncate max-w-[260px]">{t.domain}</td>
+                        <td className="py-3 mono text-xs truncate max-w-[120px] sm:max-w-[240px] md:max-w-[320px]">{t.domain}</td>
                         <td><RiskBadge risk={t.risk} /></td>
-                        <td className={`text-xs font-semibold ${severityCls[t.severity]}`}>{t.severity}</td>
+                        <td className={`text-xs font-semibold ${severityCls[t.severity]} hidden md:table-cell`}>{t.severity}</td>
                         <td className="mono text-cyber-warning text-xs">{t.score}</td>
-                        <td className="mono text-cyber-success text-xs">{t.trustScore}</td>
-                        <td className="text-xs text-muted-foreground">{t.module}</td>
-                        <td className="text-xs text-muted-foreground">{new Date(t.timestamp).toLocaleTimeString()}</td>
+                        <td className="mono text-cyber-success text-xs hidden md:table-cell">{t.trustScore}</td>
+                        <td className="text-xs text-muted-foreground hidden md:table-cell">{t.module}</td>
+                        <td className="text-xs text-muted-foreground hidden md:table-cell">{new Date(t.timestamp).toLocaleTimeString()}</td>
                       </tr>
                       {expandedId === t.id && (
                         <tr className="border-b border-border/30">
@@ -176,7 +176,7 @@ function ThreatCenter() {
         )}
 
         {selected && (
-          <aside className="glass w-96 shrink-0 rounded-2xl p-6 shadow-[var(--shadow-card)]">
+          <aside className="glass w-full lg:w-96 shrink-0 rounded-2xl p-6 shadow-[var(--shadow-card)]">
             <div className="mb-4 flex items-start justify-between">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.2em] text-cyber-cyan">XAI Explainability</p>

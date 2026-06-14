@@ -201,7 +201,7 @@ function SecurityCenter() {
           </div>
         ) : null}
         {threats.length > 0 && isExtensionInstalled && (
-          <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <section className="grid grid-cols-1 min-[480px]:grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard label="Total Scans" value={stats.total} icon={ShieldAlert} accent="danger" hint="Scans analyzed" />
             <StatCard label="Dangerous" value={stats.dangerous} icon={ShieldAlert} accent="danger" hint="High-risk detections" />
             <StatCard label="Suspicious" value={stats.suspicious} icon={ShieldAlert} accent="warning" hint="Medium-risk detections" />
@@ -289,18 +289,18 @@ function SecurityCenter() {
                     <th className="pb-2">Website</th>
                     <th className="pb-2">Risk</th>
                     <th className="pb-2">Threat Score</th>
-                    <th className="pb-2">Module</th>
-                    <th className="pb-2">Time</th>
+                    <th className="pb-2 hidden md:table-cell">Module</th>
+                    <th className="pb-2 hidden md:table-cell">Time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recent.map((t) => (
                     <tr key={t.id} className="border-b border-border/30 last:border-0">
-                      <td className="py-3 mono text-xs truncate max-w-[280px]">{t.domain}</td>
+                      <td className="py-3 mono text-xs truncate max-w-[120px] sm:max-w-[240px] md:max-w-[320px]">{t.domain}</td>
                       <td><RiskBadge risk={t.risk} /></td>
                       <td className="mono text-cyber-warning">{t.score}</td>
-                      <td className="text-xs text-muted-foreground">{t.module}</td>
-                      <td className="text-xs text-muted-foreground">{relTime(t.timestamp)}</td>
+                      <td className="text-xs text-muted-foreground hidden md:table-cell">{t.module}</td>
+                      <td className="text-xs text-muted-foreground hidden md:table-cell">{relTime(t.timestamp)}</td>
                     </tr>
                   ))}
                 </tbody>

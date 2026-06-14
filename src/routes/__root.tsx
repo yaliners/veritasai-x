@@ -9,6 +9,8 @@ import {
 
 import { AppSidebar } from "@/components/veritas/app-sidebar";
 import { Toaster } from "sonner";
+import { LayoutDashboard, Radar, BarChart3, ListChecks, Settings } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 function NotFoundComponent() {
   return (
@@ -73,6 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+const bottomNavItems = [
+  { to: "/dashboard", label: "Home", icon: LayoutDashboard },
+  { to: "/threats", label: "Alerts", icon: Radar },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/trusted", label: "Trusted", icon: ListChecks },
+  { to: "/settings", label: "Settings", icon: Settings },
+];
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -82,10 +92,32 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div className="flex min-h-screen w-full">
         {!isLandingPage && <AppSidebar />}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col pb-[60px] md:pb-0">
           <Outlet />
         </div>
       </div>
+
+      {!isLandingPage && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 h-[60px] bg-[#0F172A] border-t border-white/[0.07] flex justify-around items-center md:hidden">
+          {bottomNavItems.map((item) => {
+            const active = path === item.to;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="flex flex-col items-center justify-center flex-1 h-full py-1 gap-1 select-none"
+              >
+                <Icon className={cn("h-5 w-5 transition-colors", active ? "text-[#06B6D4]" : "text-[#64748B]")} />
+                <span className={cn("text-[10px] font-medium transition-colors", active ? "text-[#06B6D4]" : "text-[#64748B]")}>
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
+
       <Toaster position="bottom-right" richColors />
     </QueryClientProvider>
   );
