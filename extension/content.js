@@ -262,6 +262,7 @@
           aiPrediction: "Malicious",
           mlRisk: "High",
           subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
           time: Date.now(),
           cached: false,
           reasons: ["User reported dangerous domain"]
@@ -287,6 +288,7 @@
           aiPrediction: "Benign",
           mlRisk: "Low",
           subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
           time: Date.now(),
           cached: false,
           reasons: ["User verified safe domain"]
@@ -315,6 +317,7 @@
           aiPrediction: "Benign",
           mlRisk: "Low",
           subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
           time: Date.now(),
           cached: false,
           reasons: ["Permanent safe listed domain"]
@@ -325,7 +328,7 @@
       }
 
       // PART 3 — SMART 60 MINUTE CACHE
-      const cacheKey = "vc_" + host;
+      const cacheKey = "vc_" + url;
       chrome.storage.local.get([cacheKey], async (cachedData) => {
         const cacheEntry = cachedData[cacheKey];
         if (cacheEntry && cacheEntry.timestamp && (Date.now() - cacheEntry.timestamp < 3600000)) {
@@ -520,8 +523,8 @@
           mlConfidence = "Local scan";
           reasons.push("Fallback: Offline or APIs timed out. Local analysis active.");
         } else {
-          const baseScore = (googleFlag * 0.25) + (ipqsScore * 0.40) + (vtScore * 0.35);
-          threatScore = baseScore + localScore + domainAgeFlag;
+          const baseScore = Math.max(googleFlag, ipqsScore, vtScore);
+          threatScore = Math.max(baseScore, localScore, domainAgeFlag);
           threatScore = Math.min(100, Math.round(threatScore));
           mlConfidence = Math.round(threatScore) + "%";
         }
@@ -571,13 +574,20 @@
             domainAge: domainAgeFlag,
             local: localScore
           },
+          modules: {
+            phishing: Math.min(100, Math.max(googleFlag, vtScore, M8_score)),
+            scam: Math.min(100, Math.max(ipqsScore, domainAgeFlag, M6_score)),
+            ai: Math.min(100, M7_score),
+            dark: Math.min(100, M5_score),
+            trust: trustScore
+          },
           time: Date.now(),
           cached: false,
           reasons: reasons
         };
 
         saveScanResult(scanResult);
-        saveToCache(host, scanResult);
+        saveToCache(url, scanResult);
 
         // Update Dynamic Badge
         chrome.runtime.sendMessage({ action: "updateBadge", risk: risk });
@@ -601,8 +611,8 @@
     });
   }
 
-  function saveToCache(domain, scanResult) {
-    const cacheKey = "vc_" + domain;
+  function saveToCache(urlKey, scanResult) {
+    const cacheKey = "vc_" + urlKey;
     chrome.storage.local.set({
       [cacheKey]: {
         result: scanResult,

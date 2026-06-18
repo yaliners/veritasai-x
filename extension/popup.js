@@ -268,8 +268,8 @@ async function classifyAsync(url, title = "") {
     threatScore = localScore;
     mlConfidence = "Local scan";
   } else {
-    const baseScore = (googleFlag * 0.25) + (ipqsScore * 0.40) + (vtScore * 0.35);
-    threatScore = baseScore + localScore + domainAgeFlag;
+    const baseScore = Math.max(googleFlag, ipqsScore, vtScore);
+    threatScore = Math.max(baseScore, localScore, domainAgeFlag);
     threatScore = Math.min(100, Math.round(threatScore));
     mlConfidence = Math.round(threatScore) + "%";
   }
@@ -314,10 +314,10 @@ async function classifyAsync(url, title = "") {
     conf: Math.round(threatScore),
     reasons,
     modules: {
-      phishing: gsbMatched ? 100 : (risk === "DANGEROUS" ? 90 : 10),
-      scam: ipqsPhish ? 100 : 10,
-      ai: Math.round(threatScore * 0.8),
-      dark: 10,
+      phishing: Math.min(100, Math.max(googleFlag, vtScore, M8_score)),
+      scam: Math.min(100, Math.max(ipqsScore, domainAgeFlag, M6_score)),
+      ai: 0,
+      dark: 0,
       trust: Math.round(trustScore)
     },
     module: moduleName
@@ -414,7 +414,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
   chrome.storage.local.get(["scanHistory", "settings", "trustedDomains"], async ({ scanHistory = [], settings = {}, trustedDomains = [] }) => {
     const controls = settings?.controls || { autoScan: true, popupAlerts: true, overlayAlerts: true };
-    const cacheKey = "vc_" + host;
+    const cacheKey = "vc_" + url;
 
     chrome.storage.local.get([cacheKey], async (cachedData) => {
       const cacheEntry = cachedData[cacheKey];
@@ -455,7 +455,7 @@ document.getElementById("scanNow").addEventListener("click", async () => {
 
   try {
     const result = await classifyAsync(currentUrl, "");
-    const cacheKey = "vc_" + currentSite;
+    const cacheKey = "vc_" + currentUrl;
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
       saveAndRender(result, cacheKey, currentSite, currentUrl, scanHistory);
       chrome.runtime.sendMessage({ action: "updateBadge", risk: result.risk });
@@ -501,7 +501,7 @@ document.getElementById("reportDangerous").addEventListener("click", () => {
       render(scanResult);
 
       if (currentUrl.startsWith("http://") || currentUrl.startsWith("https://")) {
-        const cacheKey = "vc_" + currentSite;
+        const cacheKey = "vc_" + currentUrl;
         const historyScanResult = {
           url: currentUrl,
           domain: currentSite,
@@ -561,7 +561,7 @@ document.getElementById("reportSafe").addEventListener("click", () => {
       render(scanResult);
 
       if (currentUrl.startsWith("http://") || currentUrl.startsWith("https://")) {
-        const cacheKey = "vc_" + currentSite;
+        const cacheKey = "vc_" + currentUrl;
         const historyScanResult = {
           url: currentUrl,
           domain: currentSite,
