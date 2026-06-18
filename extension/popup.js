@@ -333,19 +333,20 @@ function render(r) {
   document.getElementById("trust").textContent = r.trust;
   document.getElementById("conf").textContent = r.conf + "%";
 
+  const modules = r.modules || { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 };
   const mods = [
-    { name: "Phishing", v: r.modules.phishing },
-    { name: "Scam", v: r.modules.scam },
-    { name: "AI Content", v: r.modules.ai },
-    { name: "Dark Pattern", v: r.modules.dark },
-    { name: "Trust Engine", v: r.modules.trust },
+    { name: "Phishing", v: modules.phishing !== undefined ? modules.phishing : 0 },
+    { name: "Scam", v: modules.scam !== undefined ? modules.scam : 0 },
+    { name: "AI Content", v: modules.ai !== undefined ? modules.ai : 0 },
+    { name: "Dark Pattern", v: modules.dark !== undefined ? modules.dark : 0 },
+    { name: "Trust Engine", v: modules.trust !== undefined ? modules.trust : 100 },
   ];
   document.getElementById("modules").innerHTML = mods.map((m) => {
     const cls = m.name === "Trust Engine" ? (m.v > 70 ? "ok" : m.v > 40 ? "warn" : "bad") : (m.v > 60 ? "bad" : m.v > 30 ? "warn" : "ok");
     return `<li><span>${m.name}</span><span class="${cls}">${m.v}</span></li>`;
   }).join("");
 
-  document.getElementById("reasons").innerHTML = r.reasons.slice(0, 5).map((x) => `<li>${x}</li>`).join("");
+  document.getElementById("reasons").innerHTML = (r.reasons || []).slice(0, 5).map((x) => `<li>${x}</li>`).join("");
 }
 
 function renderPlaceholder(host) {
@@ -362,6 +363,7 @@ function renderPlaceholder(host) {
 
 function saveAndRender(result, cacheKey, host, url, scanHistory) {
   if (url.startsWith("http://") || url.startsWith("https://")) {
+    const modules = result.modules || { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 };
     const scanResult = {
       url: url,
       domain: host,
@@ -373,16 +375,16 @@ function saveAndRender(result, cacheKey, host, url, scanHistory) {
       aiPrediction: result.risk === "DANGEROUS" ? "Malicious" : result.risk === "SUSPICIOUS" ? "Suspicious" : "Benign",
       mlRisk: result.score > 70 ? "High" : result.score > 35 ? "Medium" : "Low",
       subScores: {
-        google: result.modules.phishing > 90 ? 100 : 0,
-        ipqs: result.modules.scam > 90 ? 100 : 0,
+        google: (modules.phishing || 0) > 90 ? 100 : 0,
+        ipqs: (modules.scam || 0) > 90 ? 100 : 0,
         virustotal: result.module === "Malware Detection" ? 100 : 0,
         domainAge: result.module === "New Domain — High Risk" ? 30 : 0,
-        local: result.score - (result.modules.phishing > 90 ? 25 : 0)
+        local: result.score - ((modules.phishing || 0) > 90 ? 25 : 0)
       },
       time: Date.now(),
       cached: false,
       reasons: result.reasons,
-      modules: result.modules,
+      modules: modules,
       conf: result.conf
     };
     

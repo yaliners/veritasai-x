@@ -25,7 +25,7 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
       const controls = settings?.controls || { autoScan: true, popupAlerts: true, overlayAlerts: true };
       
       if (!controls.popupAlerts) {
-        chrome.action.setBadgeText({ tabId, text: "" });
+        chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
         return;
       }
 
@@ -37,11 +37,11 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
       const isSafe = PERMANENT_SAFE.some(d => host === d || host.endsWith("." + d));
 
       if (isSafe) {
-        chrome.action.setBadgeBackgroundColor({ tabId, color: "#06B6D4" });
-        chrome.action.setBadgeText({ tabId, text: "✓" });
+        chrome.action.setBadgeBackgroundColor({ tabId, color: "#06B6D4" }).catch(() => {});
+        chrome.action.setBadgeText({ tabId, text: "✓" }).catch(() => {});
       } else {
-        chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" });
-        chrome.action.setBadgeText({ tabId, text: "OK" });
+        chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" }).catch(() => {});
+        chrome.action.setBadgeText({ tabId, text: "OK" }).catch(() => {});
       }
     });
   }
@@ -55,21 +55,21 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
       const applyBadge = (tId) => {
         if (!controls.popupAlerts) {
-          chrome.action.setBadgeText({ tabId: tId, text: "" });
+          chrome.action.setBadgeText({ tabId: tId, text: "" }).catch(() => {});
           return;
         }
         if (message.risk === "DANGEROUS") {
-          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#EF4444" });
-          chrome.action.setBadgeText({ tabId: tId, text: "DNG" });
+          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#EF4444" }).catch(() => {});
+          chrome.action.setBadgeText({ tabId: tId, text: "DNG" }).catch(() => {});
         } else if (message.risk === "SUSPICIOUS") {
-          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#F59E0B" });
-          chrome.action.setBadgeText({ tabId: tId, text: "SPC" });
+          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#F59E0B" }).catch(() => {});
+          chrome.action.setBadgeText({ tabId: tId, text: "SPC" }).catch(() => {});
         } else if (message.risk === "TRUSTED") {
-          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#06B6D4" });
-          chrome.action.setBadgeText({ tabId: tId, text: "✓" });
+          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#06B6D4" }).catch(() => {});
+          chrome.action.setBadgeText({ tabId: tId, text: "✓" }).catch(() => {});
         } else {
-          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#22C55E" });
-          chrome.action.setBadgeText({ tabId: tId, text: "OK" });
+          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#22C55E" }).catch(() => {});
+          chrome.action.setBadgeText({ tabId: tId, text: "OK" }).catch(() => {});
         }
       };
 
@@ -94,7 +94,7 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     if (!controls.popupAlerts) {
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs[0]) {
-          chrome.action.setBadgeText({ tabId: tabs[0].id, text: "" });
+          chrome.action.setBadgeText({ tabId: tabs[0].id, text: "" }).catch(() => {});
         }
       });
     }
