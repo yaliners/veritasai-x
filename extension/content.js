@@ -307,29 +307,7 @@
         return; 
       }
 
-      // PART 2 — PERMANENT SAFE LIST
-      const isPermanentSafe = PERMANENT_SAFE.some(d => host === d || host.endsWith("." + d));
-      if (isPermanentSafe) {
-        const safeResult = {
-          url: url,
-          domain: host,
-          risk: "SAFE",
-          score: 0,
-          trustScore: 100,
-          mlConfidence: "100%",
-          module: "Trust Engine",
-          aiPrediction: "Benign",
-          mlRisk: "Low",
-          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
-          modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
-          time: Date.now(),
-          cached: false,
-          reasons: ["Permanent safe listed domain"]
-        };
-        saveScanResult(safeResult);
-        chrome.runtime.sendMessage({ action: "updateBadge", risk: "TRUSTED" });
-        return;
-      }
+
 
       // PART 3 — SMART 60 MINUTE CACHE
       const cacheKey = "vc_" + url;

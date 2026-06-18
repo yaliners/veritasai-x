@@ -41,15 +41,8 @@ chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
         host = new URL(tab.url).hostname.toLowerCase();
       } catch (e) {}
 
-      const isSafe = PERMANENT_SAFE.some(d => host === d || host.endsWith("." + d));
-
-      if (isSafe) {
-        chrome.action.setBadgeBackgroundColor({ tabId, color: "#06B6D4" }).catch(() => {});
-        chrome.action.setBadgeText({ tabId, text: "✓" }).catch(() => {});
-      } else {
-        chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" }).catch(() => {});
-        chrome.action.setBadgeText({ tabId, text: "OK" }).catch(() => {});
-      }
+      chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" }).catch(() => {});
+      chrome.action.setBadgeText({ tabId, text: "OK" }).catch(() => {});
     });
   }
 });

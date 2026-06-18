@@ -184,20 +184,7 @@ async function classifyAsync(url, title = "") {
     };
   }
 
-  // 1. Permanent safe list check
-  const isPermanentSafe = PERMANENT_SAFE.some(d => host === d || host.endsWith("." + d));
-  if (isPermanentSafe) {
-    return {
-      host,
-      risk: "TRUSTED",
-      score: 0,
-      trust: 100,
-      conf: 100,
-      reasons: ["Permanent safe listed domain"],
-      modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
-      module: "Trust Engine"
-    };
-  }
+
 
 
   // Run concurrent APIs
