@@ -15,29 +15,6 @@
     "veritasai-shield.vercel.app"
   ];
 
-  const DANGEROUS_BLOCKLIST = [
-    "phishing.testing.google.test",
-    "malware.testing.google.test",
-    "testscam.html",
-    "secure-paypal-login.net",
-    "paypa1.com",
-    "crypto-doubler.xyz",
-    "freerobux-generator.xyz",
-    "win-prize-now.click",
-    "fake-bank-login.net",
-    "amaz0n-orders-support.help"
-  ];
-
-  const SUSPICIOUS_BLOCKLIST = [
-    "netmirror.org",
-    "crackingpatching.com",
-    "softonic.com",
-    "fmovies.to",
-    "opensubtitles.org",
-    "testphp.vulnweb.com",
-    "testfire.net",
-    "zero.webappsecurity.com"
-  ];
 
   // Global user interaction tracker for checkboxes
   document.addEventListener("click", (e) => {
@@ -362,59 +339,6 @@
           return;
         }
 
-        // PART 4 — DANGEROUS AND SUSPICIOUS BLOCKLISTS
-        const isDangerousDomain = DANGEROUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
-        const isSuspiciousDomain = SUSPICIOUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
-
-        if (isDangerousDomain) {
-          const scanResult = {
-            url: url,
-            domain: host,
-            risk: "DANGEROUS",
-            score: 95,
-            trustScore: 5,
-            mlConfidence: "95%",
-            module: "Phishing URL",
-            aiPrediction: "Malicious",
-            mlRisk: "High",
-            subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
-            time: Date.now(),
-            cached: false,
-            reasons: ["Blacklisted dangerous domain"]
-          };
-          saveScanResult(scanResult);
-          saveToCache(host, scanResult);
-          chrome.runtime.sendMessage({ action: "updateBadge", risk: "DANGEROUS" });
-          if (controls.overlayAlerts) {
-            showOverlay(95, ["Blacklisted dangerous domain"]);
-          }
-          return;
-        }
-
-        if (isSuspiciousDomain) {
-          const scanResult = {
-            url: url,
-            domain: host,
-            risk: "SUSPICIOUS",
-            score: 65,
-            trustScore: 35,
-            mlConfidence: "65%",
-            module: "Scam Pattern",
-            aiPrediction: "Suspicious",
-            mlRisk: "Medium",
-            subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
-            time: Date.now(),
-            cached: false,
-            reasons: ["Blacklisted suspicious domain"]
-          };
-          saveScanResult(scanResult);
-          saveToCache(host, scanResult);
-          chrome.runtime.sendMessage({ action: "updateBadge", risk: "SUSPICIOUS" });
-          if (controls.overlayAlerts) {
-            showOverlay(65, ["Blacklisted suspicious domain"]);
-          }
-          return;
-        }
 
         // Run APIs concurrently using Promise.all with 3000ms timeout
         let googleResult = null;

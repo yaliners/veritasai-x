@@ -17,29 +17,6 @@ const PERMANENT_SAFE = [
   "veritasai-shield.vercel.app"
 ];
 
-const DANGEROUS_BLOCKLIST = [
-  "phishing.testing.google.test",
-  "malware.testing.google.test",
-  "testscam.html",
-  "secure-paypal-login.net",
-  "paypa1.com",
-  "crypto-doubler.xyz",
-  "freerobux-generator.xyz",
-  "win-prize-now.click",
-  "fake-bank-login.net",
-  "amaz0n-orders-support.help"
-];
-
-const SUSPICIOUS_BLOCKLIST = [
-  "netmirror.org",
-  "crackingpatching.com",
-  "softonic.com",
-  "fmovies.to",
-  "opensubtitles.org",
-  "testphp.vulnweb.com",
-  "testfire.net",
-  "zero.webappsecurity.com"
-];
 
 function withTimeout(promise, ms) {
   return new Promise((resolve) => {
@@ -218,35 +195,6 @@ async function classifyAsync(url, title = "") {
     };
   }
 
-  // 2. Blocklist check
-  const isDangerousDomain = DANGEROUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
-  const isSuspiciousDomain = SUSPICIOUS_BLOCKLIST.some(d => host === d || host.endsWith("." + d));
-
-  if (isDangerousDomain) {
-    return {
-      host,
-      risk: "DANGEROUS",
-      score: 95,
-      trust: 5,
-      conf: 95,
-      reasons: ["Blacklisted dangerous domain"],
-      modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
-      module: "Phishing URL"
-    };
-  }
-
-  if (isSuspiciousDomain) {
-    return {
-      host,
-      risk: "SUSPICIOUS",
-      score: 65,
-      trust: 35,
-      conf: 65,
-      reasons: ["Blacklisted suspicious domain"],
-      modules: { phishing: 65, scam: 15, ai: 50, dark: 10, trust: 35 },
-      module: "Scam Pattern"
-    };
-  }
 
   // Run concurrent APIs
   let googleResult = null;
