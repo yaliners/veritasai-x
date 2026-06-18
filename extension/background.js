@@ -10,6 +10,13 @@ const PERMANENT_SAFE = [
 ];
 
 chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get(null, (items) => {
+    const keysToRemove = Object.keys(items).filter(key => key.startsWith("vc_"));
+    if (keysToRemove.length > 0) {
+      chrome.storage.local.remove(keysToRemove);
+    }
+  });
+
   chrome.storage.local.set({
     scanHistory: [],
     settings: {

@@ -117,8 +117,9 @@
   }
 
   async function checkGoogleSafeBrowsing(url, key) {
-    if (url.includes("phishing.testing.google.test") || url.includes("malware.testing.google.test") || url.includes("unwanted.testing.google.test")) {
-      return { matched: true, threatType: url.includes("malware") ? "MALWARE" : url.includes("unwanted") ? "UNWANTED_SOFTWARE" : "SOCIAL_ENGINEERING" };
+    const lowercaseUrl = (url || "").toLowerCase();
+    if (lowercaseUrl.includes("phishing.testing.google.test") || lowercaseUrl.includes("malware.testing.google.test") || lowercaseUrl.includes("unwanted.testing.google.test")) {
+      return { matched: true, threatType: lowercaseUrl.includes("malware") ? "MALWARE" : lowercaseUrl.includes("unwanted") ? "UNWANTED_SOFTWARE" : "SOCIAL_ENGINEERING" };
     }
     if (!key) return null;
     try {
