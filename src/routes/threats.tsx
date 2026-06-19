@@ -204,12 +204,20 @@ function ThreatCenter() {
               </Section>
               <Section icon={<AlertTriangle className="h-3.5 w-3.5 text-cyber-warning" />} title="Why flagged">
                 <ul className="space-y-1.5">
-                  {selected.reasons.map((r) => (
-                    <li key={r} className="flex items-start gap-2 text-xs text-foreground/90">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-cyber-cyan" />
-                      {r}
-                    </li>
-                  ))}
+                  {selected.reasons.map((r) => {
+                    const isChecked = r.startsWith("✓");
+                    const text = isChecked ? r.substring(1).trim() : r;
+                    return (
+                      <li key={r} className="flex items-start gap-2 text-xs text-foreground/90">
+                        {isChecked ? (
+                          <span className="text-cyber-success font-bold shrink-0">✓</span>
+                        ) : (
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-cyber-cyan" />
+                        )}
+                        <span>{text}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </Section>
               <Section icon={<KeyRound className="h-3.5 w-3.5 text-cyber-danger" />} title="Detected indicators">

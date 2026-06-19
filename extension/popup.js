@@ -157,6 +157,11 @@ async function classifyAsync(url, title = "") {
 
   const { settings = {}, personalBlocklist = [], personalSafeList = [] } = await chrome.storage.local.get(["settings", "personalBlocklist", "personalSafeList"]);
   const modules = settings.modules || { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false };
+  const apiKeys = settings.apiKeys || {};
+  const googleKey = apiKeys.googleSafeBrowsing || GOOGLE_SAFE_BROWSING_KEY;
+  const ipqsKey = apiKeys.ipQualityScore || IPQS_KEY;
+  const vtKey = apiKeys.virusTotal || VIRUSTOTAL_KEY;
+  const whoisKey = apiKeys.whoisXml || WHOIS_KEY;
 
   if (personalBlocklist.some(d => host === d || host.endsWith("." + d))) {
     return {
@@ -195,10 +200,10 @@ async function classifyAsync(url, title = "") {
 
   try {
     const results = await Promise.all([
-      modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000) : Promise.resolve(null),
-      modules.scam ? withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000) : Promise.resolve(null),
-      withTimeout(checkVirusTotal(url, VIRUSTOTAL_KEY), 3000),
-      withTimeout(checkWhoisAge(host, WHOIS_KEY), 3000)
+      modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, googleKey), 3000) : Promise.resolve(null),
+      modules.scam ? withTimeout(checkIPQualityScore(url, ipqsKey), 3000) : Promise.resolve(null),
+      withTimeout(checkVirusTotal(url, vtKey), 3000),
+      withTimeout(checkWhoisAge(host, whoisKey), 3000)
     ]);
     googleResult = results[0];
     ipqsResult = results[1];
@@ -289,6 +294,23 @@ async function classifyAsync(url, title = "") {
   else if (M6_score > 0) moduleName = "Scam Pattern";
   else if (M8_score > 0) moduleName = "Phishing URL";
 
+  // Populate Detection Evidence list
+  if (googleResult && googleResult.matched) {
+    reasons.push("✓ Failed Google Safe Browsing check");
+  }
+  if (vtResult && vtResult.malicious > 0) {
+    reasons.push("✓ Flagged by VirusTotal");
+  }
+  if (ipqsResult && ipqsResult.fraud_score > 40) {
+    reasons.push("✓ IPQS Fraud Score: " + ipqsResult.fraud_score);
+  }
+  if (whoisResult && whoisResult.age !== null && whoisResult.age !== undefined && whoisResult.age < 30) {
+    reasons.push("✓ Newly registered domain (" + whoisResult.age + " days old)");
+  }
+  if (isMixedBrand || hyphenCount > 2 || isSuspiciousTld) {
+    reasons.push("✓ Suspicious domain keywords");
+  }
+
   if (modules.voiceClone) {
     reasons.push("Beta — monitoring audio elements");
   }
@@ -337,7 +359,29 @@ function render(r) {
     return `<li><span>${m.name}</span><span class="${cls}">${m.v}</span></li>`;
   }).join("");
 
-  document.getElementById("reasons").innerHTML = (r.reasons || []).slice(0, 5).map((x) => `<li>${x}</li>`).join("");
+  if (r.risk === "DANGEROUS" || r.risk === "SUSPICIOUS") {
+    const evidenceListHtml = (r.reasons || []).slice(0, 6).map((x) => {
+      const cleanText = x.replace(/^[✓\s*-]+/, "");
+      return `<li style="font-size: 11px; color: #e6edf7; padding: 0; display: flex; align-items: flex-start; gap: 6px; line-height: 1.4; margin-bottom: 4px; text-align: left;">
+        <span style="color: #22c55e; font-weight: bold; shrink-0;">✓</span>
+        <span>${cleanText}</span>
+      </li>`;
+    }).join("");
+
+    document.getElementById("reasons").innerHTML = `
+      <div style="background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; padding: 12px; margin-top: 4px; text-align: left; width: 100%;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(239, 68, 68, 0.15); padding-bottom: 8px; margin-bottom: 8px;">
+          <span style="font-size: 11px; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 0.05em;">Evidence</span>
+          <span style="font-size: 11px; font-weight: 700; color: #ef4444; background: rgba(239, 68, 68, 0.12); padding: 2px 6px; border-radius: 4px;">Threat Score: ${r.score || 0}</span>
+        </div>
+        <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px;">
+          ${evidenceListHtml}
+        </ul>
+      </div>
+    `;
+  } else {
+    document.getElementById("reasons").innerHTML = (r.reasons || []).slice(0, 5).map((x) => `<li>${x}</li>`).join("");
+  }
 }
 
 function renderPlaceholder(host) {

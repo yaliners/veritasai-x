@@ -5,8 +5,7 @@ const PERMANENT_SAFE = [
   "twitter.com", "instagram.com", "facebook.com",
   "whatsapp.com", "wikipedia.org", "stackoverflow.com",
   "netflix.com", "spotify.com", "reddit.com",
-  "anthropic.com", "openai.com", "vercel.app",
-  "veritasai-shield.vercel.app"
+  "anthropic.com", "openai.com", "vercel.app"
 ];
 
 chrome.runtime.onInstalled.addListener(() => {

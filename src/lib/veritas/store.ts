@@ -8,6 +8,12 @@ const SETTINGS_KEY = "veritas:settings";
 const DEFAULT_SETTINGS: SecuritySettings = {
   modules: { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false },
   controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
+  apiKeys: {
+    googleSafeBrowsing: "",
+    ipQualityScore: "",
+    virusTotal: "",
+    whoisXml: "",
+  },
 };
 
 const DEFAULT_TRUSTED: TrustedSite[] = [];

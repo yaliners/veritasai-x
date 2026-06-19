@@ -243,6 +243,11 @@
     chrome.storage.local.get(["settings", "trustedDomains", "personalBlocklist", "personalSafeList"], async ({ settings = DEFAULT_SETTINGS, trustedDomains = [], personalBlocklist = [], personalSafeList = [] }) => {
       const modules = settings?.modules || DEFAULT_SETTINGS.modules;
       const controls = settings?.controls || DEFAULT_SETTINGS.controls;
+      const apiKeys = settings?.apiKeys || {};
+      const googleKey = apiKeys.googleSafeBrowsing || GOOGLE_SAFE_BROWSING_KEY;
+      const ipqsKey = apiKeys.ipQualityScore || IPQS_KEY;
+      const vtKey = apiKeys.virusTotal || VIRUSTOTAL_KEY;
+      const whoisKey = apiKeys.whoisXml || WHOIS_KEY;
 
       // 1. Respect Auto Scan (System Control)
       if (!controls.autoScan) {
@@ -333,10 +338,10 @@
 
         try {
           const results = await Promise.all([
-            modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, GOOGLE_SAFE_BROWSING_KEY), 3000) : Promise.resolve(null),
-            modules.scam ? withTimeout(checkIPQualityScore(url, IPQS_KEY), 3000) : Promise.resolve(null),
-            withTimeout(checkVirusTotal(url, VIRUSTOTAL_KEY), 3000),
-            withTimeout(checkWhoisAge(host, WHOIS_KEY), 3000)
+            modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, googleKey), 3000) : Promise.resolve(null),
+            modules.scam ? withTimeout(checkIPQualityScore(url, ipqsKey), 3000) : Promise.resolve(null),
+            withTimeout(checkVirusTotal(url, vtKey), 3000),
+            withTimeout(checkWhoisAge(host, whoisKey), 3000)
           ]);
           googleResult = results[0];
           ipqsResult = results[1];
@@ -491,6 +496,23 @@
 
         const localScore = M5_score + M6_score + M7_score + M8_score + M9_score;
 
+        // Populate Detection Evidence list
+        if (googleResult && googleResult.matched) {
+          reasons.push("✓ Failed Google Safe Browsing check");
+        }
+        if (vtResult && vtResult.malicious > 0) {
+          reasons.push("✓ Flagged by VirusTotal");
+        }
+        if (ipqsResult && ipqsResult.fraud_score > 40) {
+          reasons.push("✓ IPQS Fraud Score: " + ipqsResult.fraud_score);
+        }
+        if (whoisResult && whoisResult.age !== null && whoisResult.age !== undefined && whoisResult.age < 30) {
+          reasons.push("✓ Newly registered domain (" + whoisResult.age + " days old)");
+        }
+        if (isMixedBrand || hyphenCount > 2 || isSuspiciousTld) {
+          reasons.push("✓ Suspicious domain keywords");
+        }
+
         let threatScore = 0;
         let mlConfidence = "";
 
@@ -607,7 +629,38 @@
     if (document.getElementById("veritas-overlay")) return;
     const el = document.createElement("div");
     el.id = "veritas-overlay";
-    el.innerHTML = '<div style="position:fixed;inset:0;background:rgba(2,8,23,0.85);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;"><div style="max-width:480px;background:#081225;border:1px solid rgba(239,68,68,0.5);border-radius:16px;padding:24px;color:#e6edf7;box-shadow:0 20px 60px rgba(0,0,0,0.6);"><p style="font-size:11px;letter-spacing:0.2em;color:#ef4444;font-weight:700;">VERITAS SHIELD ALERT</p><h2 style="font-size:22px;margin:6px 0 4px;">&#9888; Threat Detected</h2><p style="font-size:13px;color:#9aa8c2;margin-bottom:16px;">This page exhibits malicious patterns. Risk Score: <b style="color:#ef4444">' + score + '</b></p><ul style="margin:0 0 18px 16px;font-size:12px;line-height:1.7;">' + reasons.map(function(r){return "<li>"+r+"</li>";}).join("") + '</ul><div style="display:flex;gap:8px;"><button id="vleave" style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#ef4444,#f59e0b);color:#fff;font-weight:700;cursor:pointer;">Leave Site</button><button id="vcont" style="flex:1;padding:10px;border:1px solid rgba(154,168,194,0.4);border-radius:10px;background:transparent;color:#9aa8c2;font-weight:600;cursor:pointer;">Continue Anyway</button></div></div></div>';
+
+    const evidenceListHtml = reasons.map(function(r) {
+      const cleanText = r.replace(/^[✓\s*-]+/, "");
+      return '<li style="margin-bottom:6px;display:flex;align-items:flex-start;gap:8px;color:#e6edf7;">' +
+             '<span style="color:#22c55e;font-weight:bold;">✓</span>' +
+             '<span style="text-align:left;">' + cleanText + '</span>' +
+             '</li>';
+    }).join("");
+
+    const panelHtml = 
+      '<div style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:14px;margin-bottom:20px;text-align:left;">' +
+        '<div style="display:flex;justify-content:between;align-items:center;border-bottom:1px solid rgba(239,68,68,0.15);padding-bottom:8px;margin-bottom:8px;justify-content:space-between;">' +
+          '<span style="font-size:12px;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:0.05em;">Evidence</span>' +
+          '<span style="font-size:12px;font-weight:700;color:#ef4444;background:rgba(239,68,68,0.12);padding:2px 8px;border-radius:4px;">Threat Score: ' + score + '</span>' +
+        '</div>' +
+        '<ul style="list-style:none;padding:0;margin:0;font-size:12px;line-height:1.5;text-align:left;">' +
+          evidenceListHtml +
+        '</ul>' +
+      '</div>';
+
+    el.innerHTML = '<div style="position:fixed;inset:0;background:rgba(2,8,23,0.85);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;">' +
+      '<div style="max-width:480px;width:100%;background:#081225;border:1px solid rgba(239,68,68,0.5);border-radius:16px;padding:24px;color:#e6edf7;box-shadow:0 20px 60px rgba(0,0,0,0.6);text-align:center;">' +
+        '<p style="font-size:11px;letter-spacing:0.2em;color:#ef4444;font-weight:700;margin-bottom:4px;">VERITAS SHIELD ALERT</p>' +
+        '<h2 style="font-size:22px;margin:0 0 12px 0;">&#9888; Threat Detected</h2>' +
+        panelHtml +
+        '<div style="display:flex;gap:8px;">' +
+          '<button id="vleave" style="flex:1;padding:10px;border:none;border-radius:10px;background:linear-gradient(135deg,#ef4444,#f59e0b);color:#fff;font-weight:700;cursor:pointer;">Leave Site</button>' +
+          '<button id="vcont" style="flex:1;padding:10px;border:1px solid rgba(154,168,194,0.4);border-radius:10px;background:transparent;color:#9aa8c2;font-weight:600;cursor:pointer;">Continue Anyway</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
     document.documentElement.appendChild(el);
     el.querySelector("#vleave").onclick = function() { history.back(); };
     el.querySelector("#vcont").onclick = function() { el.remove(); };
