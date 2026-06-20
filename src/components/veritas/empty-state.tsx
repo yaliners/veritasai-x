@@ -19,7 +19,7 @@ export function EmptyState({ isInstalled = false }: { isInstalled?: boolean }) {
       </div>
 
       <h3 className="text-lg font-semibold text-foreground mb-2">
-        {isInstalled ? "Awaiting scan telemetry" : "No scan data yet"}
+        No scan data yet
       </h3>
 
       <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">

@@ -57,7 +57,10 @@ chrome.runtime.onMessage.addListener((message, sender) => {
           chrome.action.setBadgeText({ tabId: tId, text: "" }).catch(() => {});
           return;
         }
-        if (message.risk === "DANGEROUS") {
+        if (message.risk === "SCANNING") {
+          chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#6B7A99" }).catch(() => {});
+          chrome.action.setBadgeText({ tabId: tId, text: "..." }).catch(() => {});
+        } else if (message.risk === "DANGEROUS") {
           chrome.action.setBadgeBackgroundColor({ tabId: tId, color: "#EF4444" }).catch(() => {});
           chrome.action.setBadgeText({ tabId: tId, text: "DNG" }).catch(() => {});
         } else if (message.risk === "SUSPICIOUS") {

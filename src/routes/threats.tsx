@@ -20,30 +20,24 @@ export const Route = createFileRoute("/threats")({
 function generateExplanation(threat: ThreatRecord) {
   const signals: Array<{ text: string; impact: number }> = [];
 
-  if (threat.risk === "DANGEROUS") {
-    signals.push(
-      { text: "Domain registered 3 days ago", impact: 38 },
-      { text: "Password form without SSL", impact: 31 },
-      { text: "Keyword match: scam patterns", impact: 22 }
-    );
-  } else if (threat.risk === "SUSPICIOUS") {
-    signals.push(
-      { text: "Unusual domain structure detected", impact: 24 },
-      { text: "AI-generated content patterns", impact: 18 },
-      { text: "Urgency tactics in messaging", impact: 15 }
-    );
-  } else if (threat.risk === "SAFE") {
-    signals.push(
-      { text: "Domain age over 5 years", impact: 45 },
-      { text: "Valid SSL certificate found", impact: 28 },
-      { text: "No malicious indicators detected", impact: 12 }
-    );
-  } else {
-    signals.push(
-      { text: "Enterprise reputation verified", impact: 52 },
-      { text: "Industry-standard security headers", impact: 35 },
-      { text: "Whitelisted domain authority", impact: 18 }
-    );
+  const baseImpact = threat.score > 0 ? Math.round(threat.score / Math.max(1, threat.reasons.length)) : 10;
+  
+  threat.reasons.forEach((r, idx) => {
+    const cleanText = r.replace(/^[✓\s*-]+/, "");
+    if (cleanText.toLowerCase().includes("local scan only")) return;
+    signals.push({
+      text: cleanText,
+      impact: Math.min(95, Math.max(5, baseImpact + (idx * 5) - (idx * 2)))
+    });
+  });
+
+  if (signals.length === 0) {
+    if (threat.risk === "SAFE" || threat.risk === "TRUSTED") {
+      signals.push({ text: "Verified domain reputation", impact: 100 });
+      signals.push({ text: "SSL certificate valid", impact: 100 });
+    } else {
+      signals.push({ text: "Anomalous heuristics detected", impact: threat.score });
+    }
   }
 
   const actionMap: Record<Risk, string> = {
@@ -54,7 +48,7 @@ function generateExplanation(threat: ThreatRecord) {
   };
 
   return {
-    signals: signals.slice(0, 3),
+    signals: signals.slice(0, 4),
     action: actionMap[threat.risk],
   };
 }

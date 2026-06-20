@@ -146,21 +146,28 @@ function loadThreatsFromExtension(): ThreatRecord[] {
       const now = Date.now();
       const presentScans = scans.filter(s => now - s.time < 24 * 60 * 60 * 1000);
 
-      return presentScans.map((s, i) => ({
-        id: `scan_${i}_${s.time}`,
-        url: s.url,
-        domain: s.domain,
-        risk: (s.risk as any),
-        score: s.score,
-        trustScore: s.trustScore,
-        confidence: 80 + Math.floor(Math.random() * 20),
-        aiPrediction: s.aiPrediction,
-        mlRisk: s.mlRisk,
-        module: s.module || (s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine"),
-        reasons: [],
-        severity: s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
-        timestamp: s.time,
-      }));
+      return presentScans.map((s, i) => {
+        let confValue = s.score;
+        if (s.mlConfidence) {
+          const parsed = parseInt(s.mlConfidence);
+          if (!isNaN(parsed)) confValue = parsed;
+        }
+        return {
+          id: `scan_${i}_${s.time}`,
+          url: s.url,
+          domain: s.domain,
+          risk: (s.risk as any),
+          score: s.score,
+          trustScore: s.trustScore,
+          confidence: confValue,
+          aiPrediction: s.aiPrediction,
+          mlRisk: s.mlRisk,
+          module: s.module || (s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine"),
+          reasons: s.reasons || [],
+          severity: s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
+          timestamp: s.time,
+        };
+      });
     }
   } catch {
     // Return empty array if parsing fails
