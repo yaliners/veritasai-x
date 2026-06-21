@@ -9,7 +9,7 @@ import {
 
 import { AppSidebar } from "@/components/veritas/app-sidebar";
 import { Toaster } from "sonner";
-import { LayoutDashboard, Radar, BarChart3, ListChecks, Settings } from "lucide-react";
+import { LayoutDashboard, Radar, BarChart3, ListChecks, Settings, Clock, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function NotFoundComponent() {
@@ -78,6 +78,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 const bottomNavItems = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/threats", label: "Alerts", icon: Radar },
+  { to: "/timeline", label: "Timeline", icon: Clock },
+  { to: "/report", label: "Report", icon: FileText },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/trusted", label: "Trusted", icon: ListChecks },
   { to: "/settings", label: "Settings", icon: Settings },

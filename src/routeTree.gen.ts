@@ -10,9 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TrustedRouteImport } from './routes/trusted'
+import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as ThreatsRouteImport } from './routes/threats'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
@@ -20,6 +22,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const TrustedRoute = TrustedRouteImport.update({
   id: '/trusted',
   path: '/trusted',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ThreatsRoute = ThreatsRouteImport.update({
@@ -35,6 +42,11 @@ const SetupRoute = SetupRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -57,18 +69,22 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
+  '/report': typeof ReportRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
+  '/timeline': typeof TimelineRoute
   '/trusted': typeof TrustedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
+  '/report': typeof ReportRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
+  '/timeline': typeof TimelineRoute
   '/trusted': typeof TrustedRoute
 }
 export interface FileRoutesById {
@@ -76,9 +92,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
+  '/report': typeof ReportRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
+  '/timeline': typeof TimelineRoute
   '/trusted': typeof TrustedRoute
 }
 export interface FileRouteTypes {
@@ -87,27 +105,33 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/report'
     | '/settings'
     | '/setup'
     | '/threats'
+    | '/timeline'
     | '/trusted'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/report'
     | '/settings'
     | '/setup'
     | '/threats'
+    | '/timeline'
     | '/trusted'
   id:
     | '__root__'
     | '/'
     | '/analytics'
     | '/dashboard'
+    | '/report'
     | '/settings'
     | '/setup'
     | '/threats'
+    | '/timeline'
     | '/trusted'
   fileRoutesById: FileRoutesById
 }
@@ -115,9 +139,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   DashboardRoute: typeof DashboardRoute
+  ReportRoute: typeof ReportRoute
   SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
   ThreatsRoute: typeof ThreatsRoute
+  TimelineRoute: typeof TimelineRoute
   TrustedRoute: typeof TrustedRoute
 }
 
@@ -128,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/trusted'
       fullPath: '/trusted'
       preLoaderRoute: typeof TrustedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/threats': {
@@ -149,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -179,9 +219,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   DashboardRoute: DashboardRoute,
+  ReportRoute: ReportRoute,
   SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
   ThreatsRoute: ThreatsRoute,
+  TimelineRoute: TimelineRoute,
   TrustedRoute: TrustedRoute,
 }
 export const routeTree = rootRouteImport

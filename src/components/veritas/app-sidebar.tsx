@@ -1,11 +1,13 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Shield, LayoutDashboard, Radar, BarChart3, ListChecks, Settings, Download } from "lucide-react";
+import { Shield, LayoutDashboard, Radar, BarChart3, ListChecks, Settings, Download, Clock, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
 const nav = [
   { to: "/dashboard", label: "Security Center", icon: LayoutDashboard },
   { to: "/threats", label: "Threat Intelligence", icon: Radar },
+  { to: "/timeline", label: "Security Timeline", icon: Clock },
+  { to: "/report", label: "Security Report", icon: FileText },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/trusted", label: "Trusted Sites", icon: ListChecks },
   { to: "/settings", label: "Settings", icon: Settings },
