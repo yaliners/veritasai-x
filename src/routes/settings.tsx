@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { useSettings, clearAll, useExtensionInstalled } from "@/lib/veritas/store";
 import { EmptyState } from "@/components/veritas/empty-state";
-import { Save, Trash2, RotateCcw, ShieldOff, Moon, Sun, Key } from "lucide-react";
+import { Save, Trash2, RotateCcw, ShieldOff, Moon, Sun } from "lucide-react";
 import type { SecuritySettings } from "@/lib/veritas/types";
 import { toast } from "sonner";
 
@@ -21,18 +21,6 @@ function SettingsCenter() {
   const [settings, setSettings] = useSettings();
   const isExtensionInstalled = useExtensionInstalled();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  const [googleKey, setGoogleKey] = useState(settings.apiKeys?.googleSafeBrowsing || "");
-  const [ipqsKey, setIpqsKey] = useState(settings.apiKeys?.ipQualityScore || "");
-  const [vtKey, setVtKey] = useState(settings.apiKeys?.virusTotal || "");
-  const [whoisKey, setWhoisKey] = useState(settings.apiKeys?.whoisXml || "");
-
-  useEffect(() => {
-    setGoogleKey(settings.apiKeys?.googleSafeBrowsing || "");
-    setIpqsKey(settings.apiKeys?.ipQualityScore || "");
-    setVtKey(settings.apiKeys?.virusTotal || "");
-    setWhoisKey(settings.apiKeys?.whoisXml || "");
-  }, [settings]);
 
   useEffect(() => {
     const activeTheme = document.documentElement.classList.contains("light") ? "light" : "dark";
@@ -61,12 +49,6 @@ function SettingsCenter() {
   function handleSaveSettings() {
     setSettings({
       ...settings,
-      apiKeys: {
-        googleSafeBrowsing: googleKey,
-        ipQualityScore: ipqsKey,
-        virusTotal: vtKey,
-        whoisXml: whoisKey,
-      },
     });
     toast.success("Settings saved successfully!", {
       description: "Extension configuration has been synchronized.",
@@ -146,57 +128,7 @@ function SettingsCenter() {
               </div>
             </section>
 
-            <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
-              <h2 className="text-base font-semibold flex items-center gap-2">
-                <Key className="h-4.5 w-4.5 text-cyber-cyan" />
-                API Configuration
-              </h2>
-              <p className="mb-4 text-xs text-muted-foreground">
-                Customize API keys for real-time threat intelligence feeds. VeritasShield will fall back to its own secure, high-accuracy network keys if these are left blank.
-              </p>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">Google Safe Browsing API Key</label>
-                  <input
-                    type="text"
-                    value={googleKey}
-                    onChange={(e) => setGoogleKey(e.target.value)}
-                    placeholder="Fallback Active (AIzaSy...)"
-                    className="font-mono rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">IPQualityScore API Key</label>
-                  <input
-                    type="text"
-                    value={ipqsKey}
-                    onChange={(e) => setIpqsKey(e.target.value)}
-                    placeholder="Fallback Active (sYnwTP...)"
-                    className="font-mono rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">VirusTotal API Key</label>
-                  <input
-                    type="text"
-                    value={vtKey}
-                    onChange={(e) => setVtKey(e.target.value)}
-                    placeholder="Fallback Active (f50bfa...)"
-                    className="font-mono rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-semibold text-foreground/80">WhoisXML API Key</label>
-                  <input
-                    type="text"
-                    value={whoisKey}
-                    onChange={(e) => setWhoisKey(e.target.value)}
-                    placeholder="Fallback Active (at_Xlk...)"
-                    className="font-mono rounded-lg border border-border/60 bg-card/60 px-3 py-2 text-sm outline-none focus:border-cyber-cyan transition-colors"
-                  />
-                </div>
-              </div>
-            </section>
+
 
             <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
               <h2 className="text-base font-semibold">Data & Reset</h2>
