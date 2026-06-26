@@ -25,26 +25,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-chrome.tabs.onUpdated.addListener((tabId, info, tab) => {
-  if (info.status === "complete" && tab.url && tab.url.startsWith("http")) {
-    chrome.storage.local.get(["settings"], ({ settings = {} }) => {
-      const controls = settings?.controls || { autoScan: true, popupAlerts: true, overlayAlerts: true };
-      
-      if (!controls.popupAlerts) {
-        chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
-        return;
-      }
-
-      let host = "";
-      try {
-        host = new URL(tab.url).hostname.toLowerCase();
-      } catch (e) {}
-
-      chrome.action.setBadgeBackgroundColor({ tabId, color: "#22C55E" }).catch(() => {});
-      chrome.action.setBadgeText({ tabId, text: "OK" }).catch(() => {});
-    });
-  }
-});
+// Remove automatic onUpdated badge reset to prevent overwriting active scanner state
 
 chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.action === "updateBadge") {

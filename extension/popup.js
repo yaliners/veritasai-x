@@ -564,7 +564,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
 
   chrome.storage.local.get(["scanHistory", "settings", "trustedDomains"], async ({ scanHistory = [], settings = {}, trustedDomains = [] }) => {
     const controls = settings?.controls || { autoScan: true, popupAlerts: true, overlayAlerts: true };
-    const cacheKey = "vc_" + url;
+    const cacheKey = "vc_" + baseDomain;
 
     if (isPermanentSafe) {
       const result = {
@@ -627,7 +627,7 @@ document.getElementById("scanNow").addEventListener("click", async () => {
     renderLoading(currentSite);
     chrome.runtime.sendMessage({ action: "updateBadge", risk: "SCANNING" });
     const result = await classifyAsync(currentUrl, "");
-    const cacheKey = "vc_" + currentUrl;
+    const cacheKey = "vc_" + currentSite.replace(/^www\./, "").toLowerCase();
     chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
       saveAndRender(result, cacheKey, currentSite, currentUrl, scanHistory);
       chrome.runtime.sendMessage({ action: "updateBadge", risk: result.risk });
@@ -673,7 +673,7 @@ document.getElementById("reportDangerous").addEventListener("click", () => {
       render(scanResult);
 
       if (currentUrl.startsWith("http://") || currentUrl.startsWith("https://")) {
-        const cacheKey = "vc_" + currentUrl;
+        const cacheKey = "vc_" + currentSite.replace(/^www\./, "").toLowerCase();
         const historyScanResult = {
           url: currentUrl,
           domain: currentSite,
@@ -733,7 +733,7 @@ document.getElementById("reportSafe").addEventListener("click", () => {
       render(scanResult);
 
       if (currentUrl.startsWith("http://") || currentUrl.startsWith("https://")) {
-        const cacheKey = "vc_" + currentUrl;
+        const cacheKey = "vc_" + currentSite.replace(/^www\./, "").toLowerCase();
         const historyScanResult = {
           url: currentUrl,
           domain: currentSite,
