@@ -1,7 +1,8 @@
-const GOOGLE_SAFE_BROWSING_KEY = "AIzaSyAhlLFE9g0jR7wVbq-pRTMyAYRRLhfwrWs";
-const IPQS_KEY = "sYnwTP8nMlIBGLK8dCXbUyDQEwQSXCiO";
-const VIRUSTOTAL_KEY = "f50bfa739b08364404699b51bc26f326b2923a20222007b179e8b2b048a486e8";
-const WHOIS_KEY = "at_XlkBiABAXaNSHT8KMsLEGgnssnVc2";
+// PART 1 — API KEYS (Aligned with content.js)
+const GOOGLE_KEY = "AIzaSyAhlLFE9g0jR7wVbq-pRTMyAYRRLhfwrWs";
+const URLSCAN_KEY = "019eea96-036b-7407-8e7e-85df59cadb59";
+const VT_KEY = "f50bfa739b08364404699b51bc26f326b2923a20222007b179e8b2b048a486e8";
+const ABUSEIPDB_KEY = "9a65e7002cb5ebb9e4b39056277a24ac54f33afdf904a7bd6d79bfc4c0be7f2dcfd0433822434cd9";
 
 let currentSite = "";
 let currentUrl = "";
@@ -17,31 +18,63 @@ const PERMANENT_SAFE = [
   "veritasai-shield.vercel.app"
 ];
 
-function withTimeout(promise, ms) {
+const getBaseDomain = (hostname) => {
+  return hostname.replace(/^www\./, "").toLowerCase();
+};
+
+const withTimeout = (promise, ms) => {
   return Promise.race([
     promise,
-    new Promise((_, reject) => 
+    new Promise((_, reject) =>
       setTimeout(() => reject(new Error("timeout")), ms)
     )
   ]);
-}
+};
 
-async function checkGoogleSafeBrowsing(url, googleKey) {
+let vtLastCall = 0;
+const VT_COOLDOWN = 15000;
+
+const canCallVT = () => {
+  return Date.now() - vtLastCall > VT_COOLDOWN;
+};
+
+const incrementVTCounter = async () => {
   try {
+    const data = await chrome.storage.local.get([
+      "vtCallsToday", "vtLastReset"
+    ]);
+    const now = Date.now();
+    const lastReset = data.vtLastReset || now;
+    const hoursSinceReset = (now - lastReset) / (1000 * 60 * 60);
+    
+    if (hoursSinceReset >= 24) {
+      await chrome.storage.local.set({
+        vtCallsToday: 1,
+        vtLastReset: now
+      });
+    } else {
+      await chrome.storage.local.set({
+        vtCallsToday: (data.vtCallsToday || 0) + 1
+      });
+    }
+  } catch (e) {
+    console.warn("Error incrementing VT counter:", e.message);
+  }
+};
+
+// API calls identical to content.js
+const checkGoogle = async (url, googleKey) => {
+  try {
+    const activeKey = googleKey || GOOGLE_KEY;
     const res = await withTimeout(fetch(
-      `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${googleKey}`,
+      "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=" + activeKey,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-          client: { clientId: "veritasai", clientVersion: "2.0" },
+          client: { clientId: "veritasai", clientVersion: "3.0" },
           threatInfo: {
-            threatTypes: [
-              "MALWARE",
-              "SOCIAL_ENGINEERING", 
-              "UNWANTED_SOFTWARE",
-              "POTENTIALLY_HARMFUL_APPLICATION"
-            ],
+            threatTypes: ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
             platformTypes: ["ANY_PLATFORM"],
             threatEntryTypes: ["URL"],
             threatEntries: [{ url }]
@@ -49,323 +82,333 @@ async function checkGoogleSafeBrowsing(url, googleKey) {
         })
       }
     ), 3000);
-    
-    if (!res.ok) return { score: 0, matched: false, reason: null };
+
+    if (!res.ok) return { score: 0, matched: false, reason: null, error: true };
     const data = await res.json();
-    const matched = data.matches && data.matches.length > 0;
-    const threatType = matched ? data.matches[0].threatType : null;
-    
+    const matched = !!(data.matches?.length);
+    const type = data.matches?.[0]?.threatType;
+
     return {
       score: matched ? 100 : 0,
       matched,
-      reason: matched ? `Google flagged: ${threatType}` : null
+      reason: matched ? "Google Safe Browsing: " + type : null,
+      forceDANGEROUS: matched
     };
   } catch (e) {
-    console.warn("Google API failed:", e.message);
     return { score: 0, matched: false, reason: null, error: true };
   }
-}
+};
 
-async function checkIPQualityScore(url, ipqsKey) {
+const checkURLScan = async (domain, urlscanKey) => {
   try {
-    const encoded = encodeURIComponent(url);
+    const activeKey = urlscanKey || URLSCAN_KEY;
+    const headers = {};
+    if (activeKey) headers["API-Key"] = activeKey;
+
     const res = await withTimeout(fetch(
-      `https://ipqualityscore.com/api/json/url/${ipqsKey}/${encoded}?strictness=1&allow_public_access_points=true`
+      "https://urlscan.io/api/v1/search/?q=domain:" + encodeURIComponent(domain) + "&size=1",
+      { headers }
     ), 3000);
-    
-    if (!res.ok) return { score: 0, reason: null };
+
+    if (!res.ok) return { score: 0, reason: null, error: true };
     const data = await res.json();
-    if (!data.success) return { score: 0, reason: null, error: true };
-    
-    const score = data.fraud_score || 0;
-    const reasons = [];
-    
-    if (data.phishing) reasons.push("Phishing detected by IPQS");
-    if (data.malware) reasons.push("Malware detected by IPQS");
-    if (data.suspicious) reasons.push("Suspicious patterns detected");
-    if (data.spam) reasons.push("Spam domain detected");
-    if (score > 75) reasons.push(`High fraud score: ${score}`);
-    
+    const result = data.results?.[0];
+
+    if (!result) return { score: 0, reason: null };
+    const verdicts = result.verdicts?.overall;
+    const malicious = verdicts?.malicious || false;
+    const score = verdicts?.score || 0;
+
     return {
-      score,
-      phishing: data.phishing || false,
-      malware: data.malware || false,
-      suspicious: data.suspicious || false,
-      reason: reasons.length > 0 ? reasons.join(", ") : null,
-      forceDANGEROUS: data.phishing || data.malware,
-      forceSUSPICIOUS: score > 40
+      score: malicious ? 100 : score,
+      malicious,
+      reason: malicious ? "URLScan flagged as malicious" : score > 50 ? "URLScan suspicious score: " + score : null,
+      forceDANGEROUS: malicious,
+      forceSUSPICIOUS: !malicious && score > 50
     };
   } catch (e) {
-    console.warn("IPQS API failed:", e.message);
     return { score: 0, reason: null, error: true };
   }
-}
+};
 
-async function checkVirusTotal(url, vtKey) {
+const checkVirusTotal = async (url, vtKey) => {
+  if (!canCallVT()) return { score: 0, reason: null, skipped: true };
+
   try {
+    vtLastCall = Date.now();
+    const activeKey = vtKey || VT_KEY;
     const urlId = btoa(url).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+
     const res = await withTimeout(fetch(
-      `https://www.virustotal.com/api/v3/urls/${urlId}`,
-      { headers: { "x-apikey": vtKey } }
+      "https://www.virustotal.com/api/v3/urls/" + urlId,
+      { headers: { "x-apikey": activeKey } }
     ), 3000);
-    
+
     if (res.status === 404) {
       const submitRes = await withTimeout(fetch(
         "https://www.virustotal.com/api/v3/urls",
         {
           method: "POST",
-          headers: {
-            "x-apikey": vtKey,
-            "Content-Type": "application/x-www-form-urlencoded"
-          },
-          body: `url=${encodeURIComponent(url)}`
+          headers: { "x-apikey": activeKey, "Content-Type": "application/x-www-form-urlencoded" },
+          body: "url=" + encodeURIComponent(url)
         }
       ), 3000);
-      
+
       if (!submitRes.ok) return { score: 0, malicious: 0, reason: null };
       const submitData = await submitRes.json();
       const analysisId = submitData.data?.id;
-      
+
       if (!analysisId) return { score: 0, malicious: 0, reason: null };
-      
       const pollRes = await withTimeout(fetch(
-        `https://www.virustotal.com/api/v3/analyses/${analysisId}`,
-        { headers: { "x-apikey": vtKey } }
+        "https://www.virustotal.com/api/v3/analyses/" + analysisId,
+        { headers: { "x-apikey": activeKey } }
       ), 3000);
-      
+
       if (!pollRes.ok) return { score: 0, malicious: 0, reason: null };
       const pollData = await pollRes.json();
       const stats = pollData.data?.attributes?.stats || {};
       const malicious = stats.malicious || 0;
-      const total = (stats.malicious || 0) + (stats.harmless || 0) + 
-                    (stats.suspicious || 0) + (stats.undetected || 0);
-      
+      const total = (stats.malicious || 0) + (stats.harmless || 0) + (stats.suspicious || 0) + (stats.undetected || 0);
+
+      await incrementVTCounter();
       return {
-        score: malicious > 3 ? 100 : malicious > 0 ? malicious * 20 : 0,
+        score: malicious > 3 ? 100 : malicious * 20,
         malicious,
         total,
-        reason: malicious > 0 ? 
-          `${malicious}/${total} antivirus engines flagged this URL` : null,
+        reason: malicious > 0 ? malicious + "/" + total + " antivirus engines flagged" : null,
         forceDANGEROUS: malicious > 3
       };
     }
-    
+
     if (!res.ok) return { score: 0, malicious: 0, reason: null, error: true };
     const data = await res.json();
     const stats = data.data?.attributes?.last_analysis_stats || {};
     const malicious = stats.malicious || 0;
-    const total = (stats.malicious || 0) + (stats.harmless || 0) + 
-                  (stats.suspicious || 0) + (stats.undetected || 0);
-    
+    const total = (stats.malicious || 0) + (stats.harmless || 0) + (stats.suspicious || 0) + (stats.undetected || 0);
+
+    await incrementVTCounter();
     return {
-      score: malicious > 3 ? 100 : malicious > 0 ? malicious * 20 : 0,
+      score: malicious > 3 ? 100 : malicious * 20,
       malicious,
       total,
-      reason: malicious > 0 ?
-        `${malicious}/${total} antivirus engines flagged this URL` : null,
+      reason: malicious > 0 ? malicious + "/" + total + " antivirus engines flagged" : null,
       forceDANGEROUS: malicious > 3
     };
   } catch (e) {
-    console.warn("VirusTotal API failed:", e.message);
     return { score: 0, malicious: 0, reason: null, error: true };
   }
-}
+};
 
-async function checkWhoisAge(domain, whoisKey) {
+const checkDomainAge = async (domain) => {
   try {
     const res = await withTimeout(fetch(
-      `https://domain-age-checker.whoisxmlapi.com/api/v1?apiKey=${whoisKey}&domainName=${domain}`
+      "https://rdap.org/domain/" + domain
     ), 3000);
-    
-    if (!res.ok) return { ageDays: null, flag: 0, reason: null };
+
+    if (!res.ok) return { flag: 0, ageDays: null, reason: null };
     const data = await res.json();
-    let ageDays = null;
-    
-    if (data.domainAge?.days) {
-      ageDays = parseInt(data.domainAge.days);
-    } else if (data.estimatedDomainAge) {
-      ageDays = parseInt(data.estimatedDomainAge);
-    }
-    
-    if (ageDays === null) return { ageDays: null, flag: 0, reason: null };
-    
+    const regEvent = data.events?.find(e => e.eventAction === "registration");
+
+    if (!regEvent) return { flag: 0, ageDays: null, reason: null };
+    const regDate = new Date(regEvent.eventDate);
+    const ageDays = Math.floor((Date.now() - regDate.getTime()) / (1000 * 60 * 60 * 24));
+
     const flag = ageDays < 30 ? 30 : ageDays < 90 ? 15 : 0;
-    const reason = ageDays < 30 ? 
-      `Domain registered only ${ageDays} days ago — high risk` :
-      ageDays < 90 ?
-      `Domain registered ${ageDays} days ago — relatively new` : null;
-    
+    const reason = ageDays < 30 ? "Domain only " + ageDays + " days old — very high risk" :
+                   ageDays < 90 ? "Domain " + ageDays + " days old — relatively new" : null;
+
     return { ageDays, flag, reason };
   } catch (e) {
-    console.warn("Whois API failed:", e.message);
-    return { ageDays: null, flag: 0, reason: null, error: true };
+    return { flag: 0, ageDays: null, reason: null };
   }
-}
+};
 
-function runLocalModules() {
+const checkAbuseIPDB = async (domain, abuseKey) => {
+  try {
+    const activeKey = abuseKey || ABUSEIPDB_KEY;
+    const res = await withTimeout(fetch(
+      "https://api.abuseipdb.com/api/v2/check?ipAddress=" + encodeURIComponent(domain) + "&maxAgeInDays=90",
+      {
+        headers: { "Key": activeKey, "Accept": "application/json" }
+      }
+    ), 3000);
+
+    if (!res.ok) return { score: 0, reason: null, error: true };
+    const data = await res.json();
+    const score = data.data?.abuseConfidenceScore || 0;
+
+    return {
+      score,
+      reason: score > 40 ? "AbuseIPDB confidence: " + score + "%" : null,
+      forceDANGEROUS: score > 80,
+      forceSUSPICIOUS: score > 40
+    };
+  } catch (e) {
+    return { score: 0, reason: null, error: true };
+  }
+};
+
+const checkCloudfareDNS = async (domain) => {
+  try {
+    const res = await withTimeout(fetch(
+      "https://cloudflare-dns.com/dns-query?name=" + encodeURIComponent(domain) + "&type=A",
+      { headers: { "Accept": "application/dns-json" } }
+    ), 3000);
+
+    if (!res.ok) return { flag: 0, reason: null, error: true };
+    const data = await res.json();
+    const status = data.Status;
+    const hasAnswers = data.Answer?.length > 0;
+
+    if (status !== 0 || !hasAnswers) {
+      return { flag: 20, reason: "DNS anomaly detected — domain may not resolve properly" };
+    }
+    return { flag: 0, reason: null };
+  } catch (e) {
+    return { flag: 0, reason: null, error: true };
+  }
+};
+
+// URL heuristics matching content.js context (avoiding browser DOM dependency)
+const runLocalModules = (url, host) => {
   let localScore = 0;
   const reasons = [];
-  
-  if (window.location.protocol === "http:") {
-    localScore += 25;
-    reasons.push("No HTTPS encryption detected");
-  }
-  
-  const host = window.location.hostname || currentSite;
-  
+  const protocol = url.startsWith("https") ? "https:" : "http:";
+
   if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) {
     localScore += 30;
     reasons.push("IP address used instead of domain name");
   }
-  
-  const hyphenCount = (host.match(/-/g) || []).length;
-  if (hyphenCount > 2) {
+
+  const hyphens = (host.match(/-/g) || []).length;
+  if (hyphens > 2) {
     localScore += 15;
-    reasons.push(`Suspicious domain with ${hyphenCount} hyphens`);
+    reasons.push("Suspicious domain: " + hyphens + " hyphens");
   }
-  
-  const suspiciousTLDs = [
-    ".xyz", ".tk", ".ml", ".ga", ".cf", ".click",
-    ".top", ".gq", ".pw", ".work", ".loan", ".date",
-    ".racing", ".win", ".download", ".stream"
+
+  const suspTLDs = [
+    ".xyz", ".tk", ".ml", ".ga", ".cf", ".click", ".top", ".gq", ".pw",
+    ".work", ".loan", ".date", ".racing", ".win", ".download", ".stream",
+    ".party", ".review"
   ];
-  suspiciousTLDs.forEach(tld => {
+  suspTLDs.forEach(tld => {
     if (host.endsWith(tld)) {
       localScore += 20;
-      reasons.push(`Suspicious domain extension: ${tld}`);
+      reasons.push("Suspicious domain extension: " + tld);
     }
   });
-  
+
   if (host.length > 30) {
     localScore += 10;
-    reasons.push(`Unusually long domain name (${host.length} characters)`);
+    reasons.push("Unusually long domain (" + host.length + " chars)");
   }
-  
+
   const homoglyphs = [
-    "paypa1", "amaz0n", "g00gle", "microsoFt",
-    "app1e", "faceb00k", "netfl1x", "lnstagram"
+    "paypa1", "amaz0n", "g00gle", "app1e", "faceb00k", "netfl1x", "lnstagram", "tw1tter", "micros0ft", "paypai"
   ];
   homoglyphs.forEach(h => {
     if (host.includes(h)) {
       localScore += 35;
-      reasons.push(`Brand impersonation detected: ${h}`);
+      reasons.push("Brand impersonation detected: " + h);
     }
   });
-  
-  return { localScore: Math.min(localScore, 40), reasons };
-}
+
+  if (protocol === "http:") {
+    localScore += 25;
+    reasons.push("No HTTPS encryption");
+  }
+
+  return {
+    localScore: Math.min(localScore, 40),
+    reasons
+  };
+};
 
 async function classifyAsync(url, title = "") {
-  let host = ""; 
-  try { host = new URL(url).hostname.toLowerCase(); } catch { host = url.toLowerCase(); }
-  const baseDomain = host.replace(/^www\./, "");
-
-  const { settings = {}, personalBlocklist = [], personalSafeList = [] } = await chrome.storage.local.get(["settings", "personalBlocklist", "personalSafeList"]);
-  const modules = settings.modules || { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false };
-  const apiKeys = settings.apiKeys || {};
-  const googleKey = apiKeys.googleSafeBrowsing || GOOGLE_SAFE_BROWSING_KEY;
-  const ipqsKey = apiKeys.ipQualityScore || IPQS_KEY;
-  const vtKey = apiKeys.virusTotal || VIRUSTOTAL_KEY;
-  const whoisKey = apiKeys.whoisXml || WHOIS_KEY;
-
-  if (personalBlocklist.some(d => host === d || host.endsWith("." + d))) {
-    return {
-      host,
-      risk: "DANGEROUS",
-      score: 95,
-      trust: 5,
-      conf: 95,
-      reasons: ["User reported dangerous domain"],
-      modules: { phishing: 95, scam: 20, ai: 85, dark: 10, trust: 5 },
-      module: "User Reported"
-    };
-  }
-
-  if (personalSafeList.some(d => host === d || host.endsWith("." + d))) {
-    return {
-      host,
-      risk: "SAFE",
-      score: 0,
-      trust: 100,
-      conf: 100,
-      reasons: ["User verified safe domain"],
-      modules: { phishing: 0, scam: 0, ai: 0, dark: 0, trust: 100 },
-      module: "User Verified"
-    };
-  }
-
-  let googleResult = null;
-  let ipqsResult = null;
-  let vtResult = null;
-  let whoisResult = null;
-
+  let host = "";
   try {
-    const results = await Promise.all([
-      modules.phishing ? withTimeout(checkGoogleSafeBrowsing(url, googleKey), 3000) : Promise.resolve(null),
-      modules.scam ? withTimeout(checkIPQualityScore(url, ipqsKey), 3000) : Promise.resolve(null),
-      withTimeout(checkVirusTotal(url, vtKey), 3000),
-      withTimeout(checkWhoisAge(baseDomain, whoisKey), 3000)
-    ]);
-    googleResult = results[0];
-    ipqsResult = results[1];
-    vtResult = results[2];
-    whoisResult = results[3];
-  } catch (e) {}
-
-  const allApisFailed = (googleResult === null && ipqsResult === null && vtResult === null && whoisResult === null);
-  const reasons = [];
-
-  const { localScore, reasons: localReasons } = runLocalModules();
-
-  let threatScore = 0;
-  let mlConfidence = "";
-
-  const googleFlag = (googleResult && googleResult.matched) ? 100 : 0;
-  const ipqsScore = ipqsResult ? (ipqsResult.score || 0) : 0;
-  const vtScore = vtResult ? (vtResult.score || 0) : 0;
-  const domainAgeFlag = (whoisResult && whoisResult.flag) ? whoisResult.flag : 0;
-
-  if (allApisFailed) {
-    threatScore = localScore;
-    mlConfidence = "Local scan";
-    reasons.push("Local scan only — APIs unavailable");
-  } else {
-    const baseScore = Math.max(googleFlag, ipqsScore, vtScore);
-    threatScore = Math.max(baseScore, localScore, domainAgeFlag);
-    threatScore = Math.min(100, Math.round(threatScore));
-    mlConfidence = Math.round(threatScore) + "%";
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    host = url.toLowerCase();
   }
+  const baseDomain = getBaseDomain(host);
 
-  threatScore = Math.min(100, threatScore);
-  const trustScore = 100 - threatScore;
+  const { settings = {} } = await chrome.storage.local.get(["settings"]);
+  const apiKeys = settings.apiKeys || {};
+
+  const googleKey = apiKeys.googleSafeBrowsing || GOOGLE_KEY;
+  const urlscanKey = apiKeys.urlscan || URLSCAN_KEY;
+  const vtKey = apiKeys.virusTotal || VT_KEY;
+  const abuseKey = apiKeys.abuseipdb || ABUSEIPDB_KEY;
+
+  const [google, urlscan, vt, rdap, abuse, dns] = await Promise.all([
+    checkGoogle(url, googleKey),
+    checkURLScan(baseDomain, urlscanKey),
+    checkVirusTotal(url, vtKey),
+    checkDomainAge(baseDomain),
+    checkAbuseIPDB(baseDomain, abuseKey),
+    checkCloudfareDNS(baseDomain)
+  ]);
+
+  const { localScore, reasons: localReasons } = runLocalModules(url, baseDomain);
+
+  const googleFlag = google.matched ? 100 : 0;
+  const urlscanScore = urlscan.score || 0;
+  const vtScore = vt.score || 0;
+  const whoisFlag = rdap.flag || 0;
+  const abuseScore = abuse.score || 0;
+  const dnsFlag = dns.flag || 0;
+
+  const apiScore = Math.round(
+    (googleFlag * 0.25) +
+    (urlscanScore * 0.25) +
+    (vtScore * 0.25) +
+    (abuseScore * 0.15) +
+    (dnsFlag * 0.10)
+  );
+
+  let threatScore = Math.min(apiScore + localScore + whoisFlag, 100);
+  const trustScore = Math.max(0, 100 - threatScore);
 
   let risk = "SAFE";
-  const gsbMatched = (googleResult && googleResult.matched);
-  const ipqsPhish = (ipqsResult && ipqsResult.forceDANGEROUS);
-  const vtMalicious = (vtResult && vtResult.forceDANGEROUS);
-
-  if (gsbMatched || ipqsPhish || vtMalicious || threatScore > 70) {
+  if (
+    google.forceDANGEROUS ||
+    urlscan.forceDANGEROUS ||
+    vt.forceDANGEROUS ||
+    abuse.forceDANGEROUS ||
+    threatScore > 70
+  ) {
     risk = "DANGEROUS";
-  } else if ((ipqsResult && ipqsResult.forceSUSPICIOUS) || threatScore > 35) {
+  } else if (
+    urlscan.forceSUSPICIOUS ||
+    abuse.forceSUSPICIOUS ||
+    threatScore > 35
+  ) {
     risk = "SUSPICIOUS";
   }
 
-  let moduleName = "Trust Engine";
-  if (gsbMatched) moduleName = "Phishing URL";
-  else if (vtMalicious) moduleName = "Malware Detection";
-  else if (ipqsResult && ipqsResult.forceDANGEROUS) moduleName = "Scam Pattern";
-  else if (whoisResult && whoisResult.flag > 0) moduleName = "New Domain";
-  else if (localScore > 20) moduleName = "Content NLP";
+  const allReasons = [
+    google.reason,
+    urlscan.reason,
+    vt.reason,
+    rdap.reason,
+    abuse.reason,
+    dns.reason,
+    ...localReasons
+  ].filter(Boolean);
 
-  if (googleResult && googleResult.reason) reasons.push(googleResult.reason);
-  if (ipqsResult && ipqsResult.reason) reasons.push(ipqsResult.reason);
-  if (vtResult && vtResult.reason) reasons.push(vtResult.reason);
-  if (whoisResult && whoisResult.reason) reasons.push(whoisResult.reason);
-  reasons.push(...localReasons);
-
-  if (reasons.length === 0) {
-    reasons.push("No threat signals detected");
+  const apisWorked = !google.error || !urlscan.error || !vt.error || !abuse.error;
+  if (!apisWorked) {
+    allReasons.push("Local scan only — APIs unavailable");
   }
+
+  let moduleName = "Trust Engine";
+  if (google.matched) moduleName = "Phishing URL";
+  else if (vt.forceDANGEROUS) moduleName = "Malware Detection";
+  else if (urlscan.forceDANGEROUS) moduleName = "Scam Pattern";
+  else if (abuse.forceDANGEROUS) moduleName = "IP Reputation";
+  else if (rdap.flag > 0) moduleName = "New Domain";
+  else if (localScore > 20) moduleName = "Content NLP";
 
   return {
     host,
@@ -373,12 +416,12 @@ async function classifyAsync(url, title = "") {
     score: Math.round(threatScore),
     trust: Math.round(trustScore),
     conf: Math.round(threatScore),
-    reasons,
+    reasons: allReasons,
     modules: {
       phishing: Math.min(100, Math.max(googleFlag, vtScore)),
-      scam: Math.min(100, Math.max(ipqsScore, domainAgeFlag)),
+      scam: Math.min(100, Math.max(urlscanScore, abuseScore)),
       ai: 0,
-      dark: 0,
+      dark: Math.min(100, localScore),
       trust: Math.round(trustScore)
     },
     module: moduleName
@@ -521,11 +564,13 @@ function saveAndRender(result, cacheKey, host, url, scanHistory) {
                     "No threats detected",
       mlRisk: result.score > 70 ? "High" : result.score > 35 ? "Medium" : "Low",
       subScores: {
-        google: (modules.phishing || 0) > 90 ? 100 : 0,
-        ipqs: (modules.scam || 0) > 90 ? 100 : 0,
-        virustotal: result.module === "Malware Detection" ? 100 : 0,
-        domainAge: result.module === "New Domain" ? 30 : 0,
-        local: result.score - ((modules.phishing || 0) > 90 ? 25 : 0)
+        google: result.subScores?.google || 0,
+        urlscan: result.subScores?.urlscan || 0,
+        virustotal: result.subScores?.virustotal || 0,
+        domainAge: result.subScores?.domainAge || 0,
+        abuse: result.subScores?.abuse || 0,
+        dns: result.subScores?.dns || 0,
+        local: result.subScores?.local || 0
       },
       time: Date.now(),
       cached: false,
@@ -549,15 +594,18 @@ function saveAndRender(result, cacheKey, host, url, scanHistory) {
   render(result);
 }
 
+// Tab initiation
 chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   const url = tabs[0]?.url || "about:blank";
   const title = tabs[0]?.title || "";
   let host = "about:blank";
-  try { host = new URL(url).hostname.toLowerCase(); } catch {}
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {}
   currentSite = host;
   currentUrl = url;
 
-  const baseDomain = host.replace(/^www\./, "");
+  const baseDomain = getBaseDomain(host);
   const isPermanentSafe = PERMANENT_SAFE.some(
     safe => baseDomain === safe || baseDomain.endsWith("." + safe)
   );
@@ -684,7 +732,7 @@ document.getElementById("reportDangerous").addEventListener("click", () => {
           module: "User Reported",
           aiPrediction: "Threat detected — do not proceed",
           mlRisk: "High",
-          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          subScores: { google: 0, urlscan: 0, virustotal: 0, domainAge: 0, abuse: 0, dns: 0, local: 0 },
           time: Date.now(),
           cached: false,
           reasons: ["User reported dangerous domain"],
@@ -744,7 +792,7 @@ document.getElementById("reportSafe").addEventListener("click", () => {
           module: "User Verified",
           aiPrediction: "No threats detected",
           mlRisk: "Low",
-          subScores: { google: 0, ipqs: 0, virustotal: 0, domainAge: 0, local: 0 },
+          subScores: { google: 0, urlscan: 0, virustotal: 0, domainAge: 0, abuse: 0, dns: 0, local: 0 },
           time: Date.now(),
           cached: false,
           reasons: ["User verified safe domain"],
