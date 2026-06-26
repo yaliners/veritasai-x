@@ -296,8 +296,8 @@ function SecurityCenter() {
                     <th className="pb-2">Website</th>
                     <th className="pb-2">Risk</th>
                     <th className="pb-2">Threat Score</th>
-                    <th className="pb-2 hidden md:table-cell">Module</th>
-                    <th className="pb-2 hidden md:table-cell">Time</th>
+                    <th className="pb-2">Module</th>
+                    <th className="pb-2">Time</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -306,8 +306,8 @@ function SecurityCenter() {
                       <td className="py-3 mono text-xs truncate max-w-[120px] sm:max-w-[240px] md:max-w-[320px]">{t.domain}</td>
                       <td><RiskBadge risk={t.risk} /></td>
                       <td className="mono text-cyber-warning">{t.score}</td>
-                      <td className="text-xs text-muted-foreground hidden md:table-cell">{t.module}</td>
-                      <td className="text-xs text-muted-foreground hidden md:table-cell">{relTime(t.timestamp)}</td>
+                      <td className="text-xs text-muted-foreground">{t.module}</td>
+                      <td className="text-xs text-muted-foreground">{relTime(t.timestamp)}</td>
                     </tr>
                   ))}
                 </tbody>
