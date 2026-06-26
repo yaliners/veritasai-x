@@ -524,6 +524,77 @@ const runLocalModules = () => {
       reasons.push("Excessive iframe elements detected (" + iframes.length + ")");
     }
 
+    // M9 — Voice Clone Monitoring
+    const audioElements = document.querySelectorAll("audio, video");
+    let hasSyntheticPattern = false;
+    audioElements.forEach(el => {
+      if (el.src && (el.src.includes("synth") || el.src.includes("ai-voice") || el.src.includes("clone") || el.src.includes("speech"))) {
+        hasSyntheticPattern = true;
+      }
+    });
+    if (audioElements.length > 0) {
+      localScore += 5;
+      reasons.push("Audio speech stream active (Voice Clone Monitoring)");
+      if (hasSyntheticPattern) {
+        localScore += 15;
+        reasons.push("Suspicious synthetic voice patterns detected");
+      }
+    }
+
+    // M10 — Fake Review Detection
+    const reviews = document.querySelectorAll(".review, [class*='review'], [id*='review']");
+    let suspiciousReviewPatterns = false;
+    reviews.forEach(el => {
+      const text = el.innerText?.toLowerCase() || "";
+      if (["delve", "testament", "moreover", "highly recommend", "game changer"].filter(w => text.includes(w)).length > 2) {
+        suspiciousReviewPatterns = true;
+      }
+    });
+    if (suspiciousReviewPatterns) {
+      localScore += 10;
+      reasons.push("Repetitive / AI-generated review patterns detected");
+    }
+
+    // M11 — Fake Support Chat widget Detection
+    const chatWidgets = document.querySelectorAll("[class*='chat'],[id*='chat'],[class*='support'],[id*='support']");
+    let isScamChat = false;
+    chatWidgets.forEach(el => {
+      const text = el.innerText?.toLowerCase() || "";
+      if (text.includes("help desk") || text.includes("support desk") || text.includes("agent live") || text.includes("customer service")) {
+        if (protocol === "http:") {
+          isScamChat = true;
+        }
+      }
+    });
+    if (isScamChat) {
+      localScore += 20;
+      reasons.push("Unsecured customer support widget (scam chat risk)");
+    }
+
+    // M12 — Browser Behavior Analysis
+    if (performance.navigation?.redirectCount > 2) {
+      localScore += 15;
+      reasons.push("Browser behavior: forced redirect pattern detected");
+    }
+
+    // M13 — Hidden Script Analysis
+    const scripts = document.querySelectorAll("script");
+    let hasMinerOrObfuscation = false;
+    scripts.forEach(s => {
+      const src = s.src?.toLowerCase() || "";
+      const content = s.textContent || "";
+      if (src.includes("coinhive") || src.includes("cryptonight") || src.includes("miner.js")) {
+        hasMinerOrObfuscation = true;
+      }
+      if (content.includes("eval(function(p,a,c,k,e,d)") || content.includes("\\x65\\x76\\x61\\x6c")) {
+        hasMinerOrObfuscation = true;
+      }
+    });
+    if (hasMinerOrObfuscation) {
+      localScore += 25;
+      reasons.push("Suspicious hidden scripts or cryptocurrency miner detected");
+    }
+
   } catch (e) {
     console.warn("Local modules error:", e.message);
   }

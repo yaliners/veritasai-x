@@ -14,6 +14,8 @@ import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as ThreatsRouteImport } from './routes/threats'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SandboxRouteImport } from './routes/sandbox'
+import { Route as ResearchRouteImport } from './routes/research'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
@@ -44,6 +46,16 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SandboxRoute = SandboxRouteImport.update({
+  id: '/sandbox',
+  path: '/sandbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResearchRoute = ResearchRouteImport.update({
+  id: '/research',
+  path: '/research',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReportRoute = ReportRouteImport.update({
   id: '/report',
   path: '/report',
@@ -70,6 +82,8 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
+  '/research': typeof ResearchRoute
+  '/sandbox': typeof SandboxRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
@@ -81,6 +95,8 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
+  '/research': typeof ResearchRoute
+  '/sandbox': typeof SandboxRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
@@ -93,6 +109,8 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
+  '/research': typeof ResearchRoute
+  '/sandbox': typeof SandboxRoute
   '/settings': typeof SettingsRoute
   '/setup': typeof SetupRoute
   '/threats': typeof ThreatsRoute
@@ -106,6 +124,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/dashboard'
     | '/report'
+    | '/research'
+    | '/sandbox'
     | '/settings'
     | '/setup'
     | '/threats'
@@ -117,6 +137,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/dashboard'
     | '/report'
+    | '/research'
+    | '/sandbox'
     | '/settings'
     | '/setup'
     | '/threats'
@@ -128,6 +150,8 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/dashboard'
     | '/report'
+    | '/research'
+    | '/sandbox'
     | '/settings'
     | '/setup'
     | '/threats'
@@ -140,6 +164,8 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   DashboardRoute: typeof DashboardRoute
   ReportRoute: typeof ReportRoute
+  ResearchRoute: typeof ResearchRoute
+  SandboxRoute: typeof SandboxRoute
   SettingsRoute: typeof SettingsRoute
   SetupRoute: typeof SetupRoute
   ThreatsRoute: typeof ThreatsRoute
@@ -184,6 +210,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sandbox': {
+      id: '/sandbox'
+      path: '/sandbox'
+      fullPath: '/sandbox'
+      preLoaderRoute: typeof SandboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/research': {
+      id: '/research'
+      path: '/research'
+      fullPath: '/research'
+      preLoaderRoute: typeof ResearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/report': {
       id: '/report'
       path: '/report'
@@ -220,6 +260,8 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   DashboardRoute: DashboardRoute,
   ReportRoute: ReportRoute,
+  ResearchRoute: ResearchRoute,
+  SandboxRoute: SandboxRoute,
   SettingsRoute: SettingsRoute,
   SetupRoute: SetupRoute,
   ThreatsRoute: ThreatsRoute,
