@@ -6,7 +6,14 @@ const TRUSTED_KEY = "veritas:trusted";
 const SETTINGS_KEY = "veritas:settings";
 
 const DEFAULT_SETTINGS: SecuritySettings = {
-  modules: { phishing: true, scam: true, aiContent: true, darkPattern: true, qrDetector: false, voiceClone: false },
+  modules: {
+    phishing: true,
+    scam: true,
+    aiContent: true,
+    darkPattern: true,
+    qrDetector: false,
+    voiceClone: false,
+  },
   controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
   apiKeys: {
     googleSafeBrowsing: "",
@@ -19,7 +26,9 @@ const DEFAULT_SETTINGS: SecuritySettings = {
 const DEFAULT_TRUSTED: TrustedSite[] = [];
 
 // Global extension status state
-let globalExtensionInstalled = typeof window !== "undefined" && document.documentElement.dataset.veritasShieldInstalled === "true";
+let globalExtensionInstalled =
+  typeof window !== "undefined" &&
+  document.documentElement.dataset.veritasShieldInstalled === "true";
 const listeners = new Set<(val: boolean) => void>();
 
 export function getExtensionInstalled() {
@@ -61,12 +70,12 @@ if (typeof window !== "undefined") {
     };
     window.addEventListener("veritas_pong", handlePong);
     window.dispatchEvent(new CustomEvent("veritas_ping"));
-    
+
     setTimeout(() => {
       if (!active) {
         setExtensionInstalled(false);
         delete document.documentElement.dataset.veritasShieldInstalled;
-        
+
         // Wipe threat history from localStorage when extension is disabled or deleted
         localStorage.removeItem("veritasai_scans");
         window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
@@ -144,7 +153,7 @@ function loadThreatsFromExtension(): ThreatRecord[] {
       }>;
       // Filter: only show present data (last 24 hours)
       const now = Date.now();
-      const presentScans = scans.filter(s => now - s.time < 24 * 60 * 60 * 1000);
+      const presentScans = scans.filter((s) => now - s.time < 24 * 60 * 60 * 1000);
 
       return presentScans.map((s, i) => {
         let confValue = s.score;
@@ -156,15 +165,22 @@ function loadThreatsFromExtension(): ThreatRecord[] {
           id: `scan_${i}_${s.time}`,
           url: s.url,
           domain: s.domain,
-          risk: (s.risk as any),
+          risk: s.risk as any,
           score: s.score,
           trustScore: s.trustScore,
           confidence: confValue,
           aiPrediction: s.aiPrediction,
           mlRisk: s.mlRisk,
-          module: s.module || (s.risk === "DANGEROUS" ? "Phishing URL" : s.risk === "SUSPICIOUS" ? "Scam Pattern" : "Trust Engine"),
+          module:
+            s.module ||
+            (s.risk === "DANGEROUS"
+              ? "Phishing URL"
+              : s.risk === "SUSPICIOUS"
+                ? "Scam Pattern"
+                : "Trust Engine"),
           reasons: s.reasons || [],
-          severity: s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
+          severity:
+            s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
           timestamp: s.time,
         };
       });
@@ -176,7 +192,10 @@ function loadThreatsFromExtension(): ThreatRecord[] {
 }
 
 export function useThreats() {
-  const [threats, setThreats] = useVeritasStore<ThreatRecord[]>(THREATS_KEY, loadThreatsFromExtension);
+  const [threats, setThreats] = useVeritasStore<ThreatRecord[]>(
+    THREATS_KEY,
+    loadThreatsFromExtension,
+  );
   const installed = useExtensionInstalled();
   return [installed ? threats : [], setThreats] as const;
 }
@@ -207,7 +226,9 @@ export function exportThreatsCSV(threats: ThreatRecord[]): string {
     t.module,
     new Date(t.timestamp).toISOString(),
   ]);
-  return [header, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  return [header, ...rows]
+    .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+    .join("\n");
 }
 
 export function downloadCSV(filename: string, contents: string) {

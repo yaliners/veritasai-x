@@ -24,9 +24,18 @@
     </section>
 
     <section class="scores">
-      <div class="score"><p class="slbl">Threat</p><p id="threat" class="sval danger">0</p></div>
-      <div class="score"><p class="slbl">Trust</p><p id="trust" class="sval success">0</p></div>
-      <div class="score"><p class="slbl">AI Conf</p><p id="conf" class="sval cyan">0%</p></div>
+      <div class="score">
+        <p class="slbl">Threat</p>
+        <p id="threat" class="sval danger">0</p>
+      </div>
+      <div class="score">
+        <p class="slbl">Trust</p>
+        <p id="trust" class="sval success">0</p>
+      </div>
+      <div class="score">
+        <p class="slbl">AI Conf</p>
+        <p id="conf" class="sval cyan">0%</p>
+      </div>
     </section>
 
     <section class="stats-bar">
@@ -54,14 +63,110 @@
       <ul id="reasons"></ul>
     </section>
 
-    <div style="display: flex; gap: 8px; padding: 12px 0;">
-      <button id="reportDangerous" style="width: 50%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: rgba(239,68,68,0.15); border: 1px solid #EF4444; color: #EF4444; cursor: pointer;">🚨 Report Dangerous</button>
-      <button id="reportSafe" style="width: 50%; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: rgba(34,197,94,0.15); border: 1px solid #22C55E; color: #22C55E; cursor: pointer;">✅ Report Safe</button>
+    <div style="display: flex; gap: 8px; padding: 12px 0">
+      <button
+        id="reportDangerous"
+        style="
+          width: 50%;
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          background: rgba(239, 68, 68, 0.15);
+          border: 1px solid #ef4444;
+          color: #ef4444;
+          cursor: pointer;
+        "
+      >
+        🚨 Report Dangerous
+      </button>
+      <button
+        id="reportSafe"
+        style="
+          width: 50%;
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 12px;
+          font-weight: 600;
+          background: rgba(34, 197, 94, 0.15);
+          border: 1px solid #22c55e;
+          color: #22c55e;
+          cursor: pointer;
+        "
+      >
+        ✅ Report Safe
+      </button>
     </div>
-    <p style="color: var(--text-muted); font-size: 11px; text-align: center; margin-top: -4px; margin-bottom: 12px;">Your reports help improve detection accuracy</p>
+    <p
+      style="
+        color: var(--text-muted);
+        font-size: 11px;
+        text-align: center;
+        margin-top: -4px;
+        margin-bottom: 12px;
+      "
+    >
+      Your reports help improve detection accuracy
+    </p>
 
-    <button id="scanNow" class="cta" style="margin-bottom: 8px;">Scan Now</button>
-    <button id="openDash" class="cta" style="background: transparent; border: 1px solid rgba(60,80,120,0.6); color: #e6edf7;">Open Dashboard ↗</button>
+    <div
+      id="accuracySection"
+      style="
+        margin-top: 4px;
+        padding: 12px;
+        border-top: 1px solid rgba(60, 80, 120, 0.25);
+        text-align: center;
+      "
+    >
+      <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px">
+        Was this detection accurate?
+      </p>
+      <div style="display: flex; gap: 8px; justify-content: center">
+        <button
+          id="feedbackYes"
+          style="
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            cursor: pointer;
+          "
+        >
+          Yes ✓
+        </button>
+        <button
+          id="feedbackNo"
+          style="
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            cursor: pointer;
+          "
+        >
+          No — False Positive ✗
+        </button>
+      </div>
+      <p
+        id="feedbackResponse"
+        style="font-size: 11px; color: #22c55e; margin-top: 6px; display: none"
+      ></p>
+    </div>
+
+    <button id="scanNow" class="cta" style="margin-bottom: 8px">Scan Now</button>
+    <button
+      id="openDash"
+      class="cta"
+      style="background: transparent; border: 1px solid rgba(60, 80, 120, 0.6); color: #e6edf7"
+    >
+      Open Dashboard ↗
+    </button>
     <script src="popup.js"></script>
   </body>
 </html>

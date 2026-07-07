@@ -9,7 +9,15 @@ import {
 
 import { AppSidebar } from "@/components/veritas/app-sidebar";
 import { Toaster } from "sonner";
-import { LayoutDashboard, Radar, BarChart3, ListChecks, Settings, Clock, FileText } from "lucide-react";
+import {
+  LayoutDashboard,
+  Radar,
+  BarChart3,
+  ListChecks,
+  Settings,
+  Clock,
+  FileText,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function NotFoundComponent() {
@@ -82,9 +90,16 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen w-full">
+      <div
+        className={cn("flex w-full", !isLandingPage ? "h-screen overflow-hidden" : "min-h-screen")}
+      >
         {!isLandingPage && <AppSidebar />}
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div
+          className={cn(
+            "flex min-w-0 flex-1 flex-col",
+            !isLandingPage && "h-screen overflow-y-auto",
+          )}
+        >
           <Outlet />
         </div>
       </div>

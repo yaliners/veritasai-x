@@ -3,7 +3,17 @@ import { useState, useEffect } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { useExtensionInstalled } from "@/lib/veritas/store";
 import { EmptyState } from "@/components/veritas/empty-state";
-import { Shield, Play, List, Clock, CheckCircle2, AlertOctagon, RefreshCw, FileText, Trash2 } from "lucide-react";
+import {
+  Shield,
+  Play,
+  List,
+  Clock,
+  CheckCircle2,
+  AlertOctagon,
+  RefreshCw,
+  FileText,
+  Trash2,
+} from "lucide-react";
 
 interface SandboxRecord {
   url: string;
@@ -19,7 +29,10 @@ export const Route = createFileRoute("/sandbox")({
   head: () => ({
     meta: [
       { title: "Threat Sandbox — VeritasShield AI" },
-      { name: "description", content: "Isolate and inspect suspicious URLs in a secure virtual sandbox." },
+      {
+        name: "description",
+        content: "Isolate and inspect suspicious URLs in a secure virtual sandbox.",
+      },
     ],
   }),
   component: ThreatSandbox,
@@ -58,7 +71,12 @@ function ThreatSandbox() {
       const matchedRules: string[] = [];
       let score = 15; // baseline
 
-      if (host.includes("login") || host.includes("secure") || host.includes("verify") || host.includes("update")) {
+      if (
+        host.includes("login") ||
+        host.includes("secure") ||
+        host.includes("verify") ||
+        host.includes("update")
+      ) {
         matchedRules.push("Suspicious login phrase in URL");
         score += 25;
       }
@@ -66,7 +84,12 @@ function ThreatSandbox() {
         matchedRules.push("Suspicious domain hyphens");
         score += 15;
       }
-      if (host.endsWith(".xyz") || host.endsWith(".tk") || host.endsWith(".cf") || host.endsWith(".work")) {
+      if (
+        host.endsWith(".xyz") ||
+        host.endsWith(".tk") ||
+        host.endsWith(".cf") ||
+        host.endsWith(".work")
+      ) {
         matchedRules.push("Suspicious TLD extension");
         score += 20;
       }
@@ -92,7 +115,11 @@ function ThreatSandbox() {
       const date = new Date();
       const formatOffset = (sec: number) => {
         const d = new Date(date.getTime() + sec * 1000);
-        return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        return d.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
       };
 
       const timeline = [
@@ -164,13 +191,15 @@ function ThreatSandbox() {
 
   return (
     <>
-      <Topbar title="Threat Sandbox" subtitle="Analyze URLs dynamically inside our isolated threat intelligence vault" />
+      <Topbar
+        title="Threat Sandbox"
+        subtitle="Analyze URLs dynamically inside our isolated threat intelligence vault"
+      />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
         {!isExtensionInstalled ? (
           <EmptyState isInstalled={isExtensionInstalled} />
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            
             {/* Input & Form Area */}
             <div className="xl:col-span-2 space-y-6">
               <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)]">
@@ -178,7 +207,8 @@ function ThreatSandbox() {
                   <Shield className="h-4.5 w-4.5 text-cyber-cyan" /> Secure Inspection Form
                 </h2>
                 <p className="mt-1 text-xs text-muted-foreground mb-4">
-                  Paste a URL to execute simulated visual, pattern, and DNS inspections inside the sandbox environment.
+                  Paste a URL to execute simulated visual, pattern, and DNS inspections inside the
+                  sandbox environment.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -208,30 +238,42 @@ function ThreatSandbox() {
 
               {/* Analysis Result Card */}
               {currentResult && (
-                <div className={`glass rounded-2xl p-6 border-l-4 ${borderTone[currentResult.category]} shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                  
+                <div
+                  className={`glass rounded-2xl p-6 border-l-4 ${borderTone[currentResult.category]} shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300`}
+                >
                   {/* Summary Block */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-4">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Sandbox Result</p>
-                      <h3 className="text-lg font-bold tracking-tight break-all">{currentResult.url}</h3>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Sandbox Result
+                      </p>
+                      <h3 className="text-lg font-bold tracking-tight break-all">
+                        {currentResult.url}
+                      </h3>
                     </div>
                     <div className="flex gap-4 items-center shrink-0">
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground text-left sm:text-right">Category</p>
-                        <p className={`text-base font-bold ${textTone[currentResult.category]}`}>{currentResult.category}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground text-left sm:text-right">
+                          Category
+                        </p>
+                        <p className={`text-base font-bold ${textTone[currentResult.category]}`}>
+                          {currentResult.category}
+                        </p>
                       </div>
                       <div className="h-8 w-px bg-border/40" />
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Threat Score</p>
-                        <p className="text-2xl font-bold font-mono text-cyber-warning">{currentResult.score}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Threat Score
+                        </p>
+                        <p className="text-2xl font-bold font-mono text-cyber-warning">
+                          {currentResult.score}
+                        </p>
                       </div>
                     </div>
                   </div>
 
                   {/* Rule Evidence and Timeline Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
                     {/* Detection Evidence Panel */}
                     <div className="space-y-3">
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -239,7 +281,10 @@ function ThreatSandbox() {
                       </h4>
                       <ul className="space-y-2">
                         {currentResult.reasons.map((r, idx) => (
-                          <li key={idx} className="text-xs flex items-start gap-2 bg-cyber-danger/5 border border-cyber-danger/20 rounded-lg p-2.5">
+                          <li
+                            key={idx}
+                            className="text-xs flex items-start gap-2 bg-cyber-danger/5 border border-cyber-danger/20 rounded-lg p-2.5"
+                          >
                             <span className="text-cyber-danger font-bold">✓</span>
                             <span>{r}</span>
                           </li>
@@ -261,7 +306,6 @@ function ThreatSandbox() {
                         ))}
                       </div>
                     </div>
-
                   </div>
 
                   {/* Security Recommendations */}
@@ -285,10 +329,8 @@ function ThreatSandbox() {
                       <FileText className="h-4 w-4" /> Download Report Card (PDF)
                     </button>
                   </div>
-
                 </div>
               )}
-
             </div>
 
             {/* History Sidebar */}
@@ -310,7 +352,9 @@ function ThreatSandbox() {
 
                 <div className="flex-1 overflow-y-auto space-y-3 pr-1">
                   {history.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-8">No sandbox runs yet.</p>
+                    <p className="text-xs text-muted-foreground text-center py-8">
+                      No sandbox runs yet.
+                    </p>
                   ) : (
                     history.map((h, idx) => (
                       <div
@@ -318,9 +362,13 @@ function ThreatSandbox() {
                         onClick={() => setCurrentResult(h)}
                         className="p-3 rounded-lg border border-border/60 bg-card/35 hover:border-cyber-cyan/40 transition-colors cursor-pointer text-left space-y-1"
                       >
-                        <p className="text-xs font-mono font-semibold truncate text-foreground">{h.url}</p>
+                        <p className="text-xs font-mono font-semibold truncate text-foreground">
+                          {h.url}
+                        </p>
                         <div className="flex justify-between items-center text-[10px]">
-                          <span className={`font-semibold ${textTone[h.category]}`}>{h.category}</span>
+                          <span className={`font-semibold ${textTone[h.category]}`}>
+                            {h.category}
+                          </span>
                           <span className="text-muted-foreground font-mono">Score: {h.score}</span>
                         </div>
                       </div>
@@ -329,7 +377,6 @@ function ThreatSandbox() {
                 </div>
               </section>
             </div>
-
           </div>
         )}
       </main>

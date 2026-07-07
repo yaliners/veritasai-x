@@ -2,15 +2,18 @@
   "manifest_version": 3,
   "name": "VeritasShield AI — Browser Security",
   "version": "1.0.0",
-  "description": "AI-powered protection from phishing, scams, AI-generated fraud, and dark patterns.",
-  "permissions": ["activeTab", "storage", "tabs", "scripting"],
+  "description": "VeritasAI Shield protects you from phishing, malware, and scams on every website. Requires access to all URLs to scan each page you visit for real-time threats. No browsing data is sent to our servers — all analysis happens locally on your device.",
+  "permissions": ["activeTab", "storage", "tabs", "scripting", "webNavigation"],
   "host_permissions": ["<all_urls>"],
+  "optional_host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "VeritasShield AI",
     "default_icon": "icon.png"
   },
-  "background": { "service_worker": "background.js" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["https://veritasai-shield.vercel.app/*", "http://*/*", "https://*/*"],
@@ -18,5 +21,22 @@
       "run_at": "document_start"
     }
   ],
-  "icons": { "16": "icon.png", "48": "icon.png", "128": "icon.png" }
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content-main.js",
+        "heuristics-worker.js",
+        "modules/apiClient.js",
+        "modules/heuristics.js",
+        "modules/storage.js",
+        "modules/alerts.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
 }

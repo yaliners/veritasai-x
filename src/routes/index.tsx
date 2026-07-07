@@ -5,7 +5,10 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "VeritasShield AI — Real-time Browser Security" },
-      { name: "description", content: "AI-powered protection from phishing, scams, and malicious content." },
+      {
+        name: "description",
+        content: "AI-powered protection from phishing, scams, and malicious content.",
+      },
     ],
   }),
   component: LandingPage,
@@ -30,7 +33,9 @@ function LandingPage() {
             <Shield className="h-6 w-6 text-background" />
             <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cyber-success" />
           </div>
-          <span className="ml-3 text-xl font-bold tracking-tight text-foreground">VeritasShield AI</span>
+          <span className="ml-3 text-xl font-bold tracking-tight text-foreground">
+            VeritasShield AI
+          </span>
         </div>
 
         {/* Hero Section */}
@@ -42,7 +47,8 @@ function LandingPage() {
             Real-time AI threat protection for your browser
           </p>
           <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-            Detect phishing, scams, malicious content, and dark patterns with explainable AI. Runs locally on your device — your data never leaves your browser.
+            Detect phishing, scams, malicious content, and dark patterns with explainable AI. Runs
+            locally on your device — your data never leaves your browser.
           </p>
         </div>
 
@@ -94,7 +100,9 @@ function LandingPage() {
 
         {/* Footer Text */}
         <div className="mt-20 pt-12 border-t border-border/40 text-center">
-          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Made with focus on</p>
+          <p className="text-xs uppercase tracking-wider text-muted-foreground mb-2">
+            Made with focus on
+          </p>
           <p className="text-sm text-muted-foreground">Security • Privacy • Transparency</p>
         </div>
       </div>

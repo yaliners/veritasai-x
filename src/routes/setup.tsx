@@ -1,12 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Download, Shield, ShieldCheck, HelpCircle, Sun, Moon, CheckCircle2, ArrowRight, RefreshCw } from "lucide-react";
+import {
+  Download,
+  Shield,
+  ShieldCheck,
+  HelpCircle,
+  Sun,
+  Moon,
+  CheckCircle2,
+  ArrowRight,
+  RefreshCw,
+} from "lucide-react";
 
 export const Route = createFileRoute("/setup")({
   head: () => ({
     meta: [
       { title: "Extension Setup — VeritasShield AI" },
-      { name: "description", content: "Learn how to install and configure the VeritasShield AI browser extension." },
+      {
+        name: "description",
+        content: "Learn how to install and configure the VeritasShield AI browser extension.",
+      },
     ],
   }),
   component: SetupPage,
@@ -39,7 +52,7 @@ function SetupPage() {
     };
     window.addEventListener("veritas_pong", handlePong);
     window.dispatchEvent(new CustomEvent("veritas_ping"));
-    
+
     setTimeout(() => {
       if (!active) {
         setIsExtensionInstalled(false);
@@ -80,7 +93,6 @@ function SetupPage() {
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-background via-background to-background/95">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
-        
         {/* Header Bar */}
         <div className="flex items-center justify-between border-b border-border/40 pb-6 mb-10">
           <Link to="/" className="flex items-center gap-3">
@@ -89,8 +101,12 @@ function SetupPage() {
               <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-cyber-success" />
             </div>
             <div>
-              <span className="text-sm font-bold tracking-tight text-foreground block">VeritasShield AI</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest block">Edge Security</span>
+              <span className="text-sm font-bold tracking-tight text-foreground block">
+                VeritasShield AI
+              </span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-widest block">
+                Edge Security
+              </span>
             </div>
           </Link>
 
@@ -99,7 +115,9 @@ function SetupPage() {
             <button
               onClick={() => toggleTheme("dark")}
               className={`flex h-8 items-center gap-2 rounded px-3 text-xs font-medium transition-colors ${
-                theme === "dark" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                theme === "dark"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Moon className="h-3.5 w-3.5" />
@@ -108,7 +126,9 @@ function SetupPage() {
             <button
               onClick={() => toggleTheme("light")}
               className={`flex h-8 items-center gap-2 rounded px-3 text-xs font-medium transition-colors ${
-                theme === "light" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                theme === "light"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <Sun className="h-3.5 w-3.5" />
@@ -119,27 +139,31 @@ function SetupPage() {
 
         {/* Content Section */}
         <div className="grid gap-8 md:grid-cols-3">
-          
           {/* Instructions Column (Main) */}
           <div className="md:col-span-2 space-y-6">
             <div className="glass rounded-2xl p-6 md:p-8">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">Extension Setup Guide</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+                Extension Setup Guide
+              </h1>
               <p className="text-sm text-muted-foreground mb-6">
-                Protect your browser in real time. Follow these steps to load the VeritasShield AI extension onto Chrome or Edge.
+                Protect your browser in real time. Follow these steps to load the VeritasShield AI
+                extension onto Chrome or Edge.
               </p>
 
               {/* Step checklist */}
               <div className="space-y-6">
-                
                 {/* Step 1 */}
                 <div className="flex gap-4">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
                     1
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground">Download the Extension Package</h3>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Download the Extension Package
+                    </h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Click the button below to download the latest packed ZIP containing the VeritasShield Manifest V3 security extension.
+                      Click the button below to download the latest packed ZIP containing the
+                      VeritasShield Manifest V3 security extension.
                     </p>
                     <button
                       onClick={handleDownload}
@@ -157,25 +181,34 @@ function SetupPage() {
                     2
                   </div>
                   <div className="space-y-2">
-                    <h3 className="text-sm font-semibold text-foreground">Install in Developer Mode</h3>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      Install in Developer Mode
+                    </h3>
                     <p className="text-xs text-muted-foreground">
                       Since this is a custom security package, load it unpacked directly in Chrome:
                     </p>
                     <ul className="list-decimal pl-4 text-xs text-muted-foreground space-y-1.5">
                       <li>
-                        Extract/unzip the downloaded <code className="rounded bg-muted px-1 py-0.5 mono text-[10px]">veritasai-extension.zip</code> file to a folder on your computer.
+                        Extract/unzip the downloaded{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 mono text-[10px]">
+                          veritasai-extension.zip
+                        </code>{" "}
+                        file to a folder on your computer.
                       </li>
                       <li>
-                        Open a new browser tab and navigate to <code className="rounded bg-muted px-1 py-0.5 mono text-[10px]">chrome://extensions</code>.
+                        Open a new browser tab and navigate to{" "}
+                        <code className="rounded bg-muted px-1 py-0.5 mono text-[10px]">
+                          chrome://extensions
+                        </code>
+                        .
                       </li>
                       <li>
                         In the top-right corner, toggle the **Developer Mode** switch to **ON**.
                       </li>
+                      <li>In the top-left corner, click the **Load unpacked** button.</li>
                       <li>
-                        In the top-left corner, click the **Load unpacked** button.
-                      </li>
-                      <li>
-                        Select the extracted extension folder (the directory containing <code className="text-[10px]">manifest.json</code>).
+                        Select the extracted extension folder (the directory containing{" "}
+                        <code className="text-[10px]">manifest.json</code>).
                       </li>
                     </ul>
                   </div>
@@ -189,11 +222,11 @@ function SetupPage() {
                   <div>
                     <h3 className="text-sm font-semibold text-foreground">Verify & Complete</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      After installation, verify that the extension is actively running local edge scans.
+                      After installation, verify that the extension is actively running local edge
+                      scans.
                     </p>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -201,8 +234,10 @@ function SetupPage() {
           {/* Connection Checker Card */}
           <div className="space-y-6">
             <div className="glass rounded-2xl p-6 shadow-[var(--shadow-card)] text-center">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">Connection Status</h2>
-              
+              <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4">
+                Connection Status
+              </h2>
+
               <div className="mb-6 flex flex-col items-center justify-center">
                 {checked && isExtensionInstalled ? (
                   <>
@@ -233,7 +268,9 @@ function SetupPage() {
                   disabled={verificationLoading}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card/60 px-4 py-2 text-xs font-semibold hover:bg-card transition-colors disabled:opacity-50"
                 >
-                  <RefreshCw className={`h-3.5 w-3.5 ${verificationLoading ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${verificationLoading ? "animate-spin" : ""}`}
+                  />
                   {verificationLoading ? "Verifying..." : "Verify Connection"}
                 </button>
 
@@ -256,13 +293,12 @@ function SetupPage() {
                 <span>Quick Tip</span>
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Once loaded, pin the VeritasShield AI icon to your extension bar. You can click the icon at any time to check threat scores and view heuristic reasons for active pages!
+                Once loaded, pin the VeritasShield AI icon to your extension bar. You can click the
+                icon at any time to check threat scores and view heuristic reasons for active pages!
               </p>
             </div>
           </div>
-
         </div>
-
       </div>
     </div>
   );

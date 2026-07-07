@@ -9,7 +9,13 @@ interface TopbarProps {
   notifications?: Array<{ id: string; domain: string; risk: string; timestamp: number }>;
 }
 
-export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notifications = [] }: TopbarProps) {
+export function Topbar({
+  title,
+  subtitle,
+  onSearch,
+  notificationCount = 0,
+  notifications = [],
+}: TopbarProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -37,7 +43,9 @@ export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notif
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <p className="text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">VeritasShield AI</p>
+          <p className="text-[10px] uppercase tracking-[0.25em] text-cyber-cyan">
+            VeritasShield AI
+          </p>
           <h1 className="text-xl font-bold tracking-tight text-lg sm:text-xl">{title}</h1>
           {subtitle && <p className="text-[10px] sm:text-xs text-muted-foreground">{subtitle}</p>}
         </div>
@@ -64,26 +72,39 @@ export function Topbar({ title, subtitle, onSearch, notificationCount = 0, notif
             className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"
           >
             <Bell className="h-4 w-4" />
-            {notificationCount > 0 && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-cyber-danger" />}
+            {notificationCount > 0 && (
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-cyber-danger" />
+            )}
           </button>
           {showNotifications && (
             <div className="absolute right-0 top-11 w-80 rounded-lg border border-border/60 bg-card/95 backdrop-blur shadow-lg">
               <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
                 <h3 className="text-sm font-semibold">Notifications</h3>
-                <button onClick={() => setShowNotifications(false)} className="text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={() => setShowNotifications(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-muted-foreground">No new notifications</div>
+                  <div className="py-8 text-center text-xs text-muted-foreground">
+                    No new notifications
+                  </div>
                 ) : (
                   <div className="divide-y divide-border/40">
                     {notifications.map((n) => (
                       <div key={n.id} className="px-4 py-3 text-xs hover:bg-card/50">
                         <div className="font-medium truncate">{n.domain}</div>
                         <div className="mt-1 flex items-center justify-between">
-                          <span className={n.risk === "DANGEROUS" ? "text-cyber-danger" : "text-cyber-warning"}>{n.risk}</span>
+                          <span
+                            className={
+                              n.risk === "DANGEROUS" ? "text-cyber-danger" : "text-cyber-warning"
+                            }
+                          >
+                            {n.risk}
+                          </span>
                           <span className="text-muted-foreground">{relTime(n.timestamp)}</span>
                         </div>
                       </div>

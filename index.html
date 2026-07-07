@@ -4,8 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>VeritasShield AI – Real-time Browser Threat Protection</title>
-    <meta name="description" content="Protect your browser in real-time with VeritasShield AI. Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI." />
-    <meta name="keywords" content="AI cybersecurity, browser protection, phishing detector, scam shield, dark patterns, local edge AI" />
+    <meta
+      name="description"
+      content="Protect your browser in real-time with VeritasShield AI. Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI."
+    />
+    <meta
+      name="keywords"
+      content="AI cybersecurity, browser protection, phishing detector, scam shield, dark patterns, local edge AI"
+    />
     <meta name="author" content="VeritasShield AI Team" />
 
     <!-- Favicon -->
@@ -15,17 +21,26 @@
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://veritasai-shield.vercel.app/" />
     <meta property="og:title" content="VeritasShield AI – Real-time Browser Threat Protection" />
-    <meta property="og:description" content="Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI. Your data never leaves your browser." />
+    <meta
+      property="og:description"
+      content="Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI. Your data never leaves your browser."
+    />
     <meta property="og:image" content="https://veritasai-shield.vercel.app/og-image.png" />
 
     <!-- Twitter / X -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content="https://veritasai-shield.vercel.app/" />
-    <meta property="twitter:title" content="VeritasShield AI – Real-time Browser Threat Protection" />
-    <meta property="twitter:description" content="Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI. Your data never leaves your browser." />
+    <meta
+      property="twitter:title"
+      content="VeritasShield AI – Real-time Browser Threat Protection"
+    />
+    <meta
+      property="twitter:description"
+      content="Detect phishing, scams, malicious content, and dark patterns locally on your device with explainable AI. Your data never leaves your browser."
+    />
     <!-- Theme Init Script -->
     <script>
-      (function() {
+      (function () {
         const theme = localStorage.getItem("veritas_theme") || "dark";
         if (theme === "light") {
           document.documentElement.classList.add("light");
@@ -39,67 +54,291 @@
     <div id="app">
       <!-- Anti-flash script for subroutes -->
       <script>
-        (function() {
+        (function () {
           const path = window.location.pathname;
           if (path !== "/" && path !== "/index.html") {
-            document.write('<style>#prerendered-landing { display: none !important; }</style>');
+            document.write("<style>#prerendered-landing { display: none !important; }</style>");
           }
         })();
       </script>
       <!-- Pre-rendered static landing page for crawlers and JS-disabled bots -->
-      <div id="prerendered-landing" style="min-height: 100vh; width: 100%; font-family: system-ui, -apple-system, sans-serif; background: #020817; color: #e6edf7; display: flex; align-items: center; justify-content: center; padding: 80px 20px;">
-        <div style="max-width: 1100px; width: 100%; text-align: center;">
+      <div
+        id="prerendered-landing"
+        style="
+          min-height: 100vh;
+          width: 100%;
+          font-family:
+            system-ui,
+            -apple-system,
+            sans-serif;
+          background: #020817;
+          color: #e6edf7;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 80px 20px;
+        "
+      >
+        <div style="max-width: 1100px; width: 100%; text-align: center">
           <!-- Logo -->
-          <div style="margin-bottom: 60px; display: inline-flex; align-items: center; justify-content: center; gap: 12px;">
-            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #00D8FF, #7C3AED); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 32px rgba(0, 216, 255, 0.4); position: relative;">
-              <svg style="width: 24px; height: 24px; color: #020817;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span style="position: absolute; right: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #22c55e;"></span>
+          <div
+            style="
+              margin-bottom: 60px;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 12px;
+            "
+          >
+            <div
+              style="
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                background: linear-gradient(135deg, #00d8ff, #7c3aed);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 0 32px rgba(0, 216, 255, 0.4);
+                position: relative;
+              "
+            >
+              <svg
+                style="width: 24px; height: 24px; color: #020817"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              <span
+                style="
+                  position: absolute;
+                  right: -4px;
+                  top: -4px;
+                  width: 10px;
+                  height: 10px;
+                  border-radius: 50%;
+                  background: #22c55e;
+                "
+              ></span>
             </div>
-            <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em;">VeritasShield AI</span>
+            <span style="font-size: 24px; font-weight: 700; letter-spacing: -0.02em"
+              >VeritasShield AI</span
+            >
           </div>
 
           <!-- Hero Section -->
-          <div style="margin-bottom: 80px;">
-            <h1 style="font-size: 48px; font-weight: 800; line-height: 1.2; margin-bottom: 24px; color: #ffffff;">VeritasShield AI</h1>
-            <p style="font-size: 20px; color: #9aa8c2; margin-bottom: 16px; max-width: 700px; margin-left: auto; margin-right: auto;">Real-time AI threat protection for your browser</p>
-            <p style="font-size: 14px; color: #6b7a99; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">
-              Detect phishing, scams, malicious content, and dark patterns with explainable AI. Runs locally on your device — your data never leaves your browser.
+          <div style="margin-bottom: 80px">
+            <h1
+              style="
+                font-size: 48px;
+                font-weight: 800;
+                line-height: 1.2;
+                margin-bottom: 24px;
+                color: #ffffff;
+              "
+            >
+              VeritasShield AI
+            </h1>
+            <p
+              style="
+                font-size: 20px;
+                color: #9aa8c2;
+                margin-bottom: 16px;
+                max-width: 700px;
+                margin-left: auto;
+                margin-right: auto;
+              "
+            >
+              Real-time AI threat protection for your browser
+            </p>
+            <p
+              style="
+                font-size: 14px;
+                color: #6b7a99;
+                max-width: 600px;
+                margin-left: auto;
+                margin-right: auto;
+                line-height: 1.6;
+              "
+            >
+              Detect phishing, scams, malicious content, and dark patterns with explainable AI. Runs
+              locally on your device — your data never leaves your browser.
             </p>
           </div>
 
           <!-- Feature Cards -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 80px; text-align: left;">
-            <div style="border: 1px solid rgba(60, 80, 120, 0.4); background: rgba(8, 18, 37, 0.4); border-radius: 16px; padding: 32px;">
-              <div style="width: 48px; height: 48px; border-radius: 8px; background: rgba(0, 216, 255, 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: #00D8FF;">
-                <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+              gap: 24px;
+              margin-bottom: 80px;
+              text-align: left;
+            "
+          >
+            <div
+              style="
+                border: 1px solid rgba(60, 80, 120, 0.4);
+                background: rgba(8, 18, 37, 0.4);
+                border-radius: 16px;
+                padding: 32px;
+              "
+            >
+              <div
+                style="
+                  width: 48px;
+                  height: 48px;
+                  border-radius: 8px;
+                  background: rgba(0, 216, 255, 0.1);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-bottom: 16px;
+                  color: #00d8ff;
+                "
+              >
+                <svg
+                  style="width: 24px; height: 24px"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
               </div>
-              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #ffffff;">8 Threat Modules</h3>
-              <p style="font-size: 14px; color: #9aa8c2; line-height: 1.5;">Comprehensive detection across phishing, scams, AI-generated fraud, dark patterns, and more.</p>
+              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #ffffff">
+                8 Threat Modules
+              </h3>
+              <p style="font-size: 14px; color: #9aa8c2; line-height: 1.5">
+                Comprehensive detection across phishing, scams, AI-generated fraud, dark patterns,
+                and more.
+              </p>
             </div>
-            <div style="border: 1px solid rgba(60, 80, 120, 0.4); background: rgba(8, 18, 37, 0.4); border-radius: 16px; padding: 32px;">
-              <div style="width: 48px; height: 48px; border-radius: 8px; background: rgba(0, 216, 255, 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: #00D8FF;">
-                <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div
+              style="
+                border: 1px solid rgba(60, 80, 120, 0.4);
+                background: rgba(8, 18, 37, 0.4);
+                border-radius: 16px;
+                padding: 32px;
+              "
+            >
+              <div
+                style="
+                  width: 48px;
+                  height: 48px;
+                  border-radius: 8px;
+                  background: rgba(0, 216, 255, 0.1);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-bottom: 16px;
+                  color: #00d8ff;
+                "
+              >
+                <svg
+                  style="width: 24px; height: 24px"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
               </div>
-              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #ffffff;">Edge AI — runs locally</h3>
-              <p style="font-size: 14px; color: #9aa8c2; line-height: 1.5;">All threat detection happens on your device. Lightning-fast analysis without cloud dependencies.</p>
+              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #ffffff">
+                Edge AI — runs locally
+              </h3>
+              <p style="font-size: 14px; color: #9aa8c2; line-height: 1.5">
+                All threat detection happens on your device. Lightning-fast analysis without cloud
+                dependencies.
+              </p>
             </div>
-            <div style="border: 1px solid rgba(60, 80, 120, 0.4); background: rgba(8, 18, 37, 0.4); border-radius: 16px; padding: 32px;">
-              <div style="width: 48px; height: 48px; border-radius: 8px; background: rgba(0, 216, 255, 0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: #00D8FF;">
-                <svg style="width: 24px; height: 24px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div
+              style="
+                border: 1px solid rgba(60, 80, 120, 0.4);
+                background: rgba(8, 18, 37, 0.4);
+                border-radius: 16px;
+                padding: 32px;
+              "
+            >
+              <div
+                style="
+                  width: 48px;
+                  height: 48px;
+                  border-radius: 8px;
+                  background: rgba(0, 216, 255, 0.1);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  margin-bottom: 16px;
+                  color: #00d8ff;
+                "
+              >
+                <svg
+                  style="width: 24px; height: 24px"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
               </div>
-              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #ffffff;">Explainable detections</h3>
-              <p style="font-size: 14px; color: #9aa8c2; line-height: 1.5;">Understand exactly why a threat was flagged with detailed forensics and confidence scoring.</p>
+              <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #ffffff">
+                Explainable detections
+              </h3>
+              <p style="font-size: 14px; color: #9aa8c2; line-height: 1.5">
+                Understand exactly why a threat was flagged with detailed forensics and confidence
+                scoring.
+              </p>
             </div>
           </div>
 
           <!-- Buttons -->
-          <div style="margin-bottom: 20px;">
-            <a href="/veritasai-extension.zip" style="display: inline-block; padding: 12px 32px; border-radius: 8px; background: linear-gradient(135deg, #00D8FF, #7C3AED); color: #020817; text-decoration: none; font-weight: 600; margin-right: 16px; box-shadow: 0 4px 14px rgba(0, 216, 255, 0.3);">Download Extension</a>
-            <a href="/dashboard" style="display: inline-block; padding: 12px 32px; border-radius: 8px; border: 1px solid rgba(154, 168, 194, 0.4); background: rgba(8, 18, 37, 0.4); color: #e6edf7; text-decoration: none; font-weight: 600;">Open Dashboard</a>
+          <div style="margin-bottom: 20px">
+            <a
+              href="/veritasai-extension.zip"
+              style="
+                display: inline-block;
+                padding: 12px 32px;
+                border-radius: 8px;
+                background: linear-gradient(135deg, #00d8ff, #7c3aed);
+                color: #020817;
+                text-decoration: none;
+                font-weight: 600;
+                margin-right: 16px;
+                box-shadow: 0 4px 14px rgba(0, 216, 255, 0.3);
+              "
+              >Download Extension</a
+            >
+            <a
+              href="/dashboard"
+              style="
+                display: inline-block;
+                padding: 12px 32px;
+                border-radius: 8px;
+                border: 1px solid rgba(154, 168, 194, 0.4);
+                background: rgba(8, 18, 37, 0.4);
+                color: #e6edf7;
+                text-decoration: none;
+                font-weight: 600;
+              "
+              >Open Dashboard</a
+            >
           </div>
-          <p style="font-size: 12px; color: #6b7a99;">
-            Chrome extension • Manifest V3 • Free • 
-            <a href="/VeritasShield-Project-Report.pdf" style="color: #00D8FF; text-decoration: none; margin-left: 4px;">Download Project Report</a>
+          <p style="font-size: 12px; color: #6b7a99">
+            Chrome extension • Manifest V3 • Free •
+            <a
+              href="/VeritasShield-Project-Report.pdf"
+              style="color: #00d8ff; text-decoration: none; margin-left: 4px"
+              >Download Project Report</a
+            >
           </p>
         </div>
       </div>

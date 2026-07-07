@@ -1,5 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Shield, LayoutDashboard, Radar, BarChart3, ListChecks, Settings, Download, Clock, FileText, ShieldAlert, Beaker } from "lucide-react";
+import {
+  Shield,
+  LayoutDashboard,
+  Radar,
+  BarChart3,
+  ListChecks,
+  Settings,
+  Download,
+  Clock,
+  FileText,
+  ShieldAlert,
+  Beaker,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -54,7 +66,7 @@ export function AppSidebar() {
           "lg:flex lg:translate-x-0 lg:static lg:z-auto",
           // Mobile styling: absolute fixed layout
           "fixed inset-y-0 left-0 z-50 flex",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         <Link
@@ -68,12 +80,16 @@ export function AppSidebar() {
           </div>
           <div>
             <p className="text-sm font-bold tracking-tight text-foreground">VeritasShield AI</p>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">v1.0.0 · SOC</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+              v1.0.0 · SOC
+            </p>
           </div>
         </Link>
 
         <nav className="flex-1 space-y-1 px-3">
-          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Operations</p>
+          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Operations
+          </p>
           {nav.map((item) => {
             const active = path === item.to;
             const Icon = item.icon;
@@ -98,7 +114,9 @@ export function AppSidebar() {
 
         <div className="m-3 rounded-xl border border-border/60 bg-card/60 p-4">
           <p className="text-xs font-semibold">Chrome Extension</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">Deploy real-time browser protection.</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Deploy real-time browser protection.
+          </p>
           <Link
             to="/setup"
             onClick={() => setIsOpen(false)}

@@ -32,30 +32,30 @@ function ChronologicalTimeline() {
     DANGEROUS: {
       dot: "bg-cyber-danger",
       glow: "shadow-[0_0_12px_rgba(239,68,68,0.5)]",
-      border: "border-cyber-danger/30"
+      border: "border-cyber-danger/30",
     },
     SUSPICIOUS: {
       dot: "bg-cyber-warning",
       glow: "shadow-[0_0_12px_rgba(245,158,11,0.5)]",
-      border: "border-cyber-warning/30"
+      border: "border-cyber-warning/30",
     },
     SAFE: {
       dot: "bg-cyber-success",
       glow: "shadow-[0_0_12px_rgba(34,197,94,0.5)]",
-      border: "border-cyber-success/30"
+      border: "border-cyber-success/30",
     },
     TRUSTED: {
       dot: "bg-cyber-cyan",
       glow: "shadow-[0_0_12px_rgba(6,182,212,0.5)]",
-      border: "border-cyber-cyan/30"
-    }
+      border: "border-cyber-cyan/30",
+    },
   };
 
   const formatTime = (ts: number) => {
     return new Date(ts).toLocaleTimeString(undefined, {
       hour: "2-digit",
       minute: "2-digit",
-      second: "2-digit"
+      second: "2-digit",
     });
   };
 
@@ -63,13 +63,16 @@ function ChronologicalTimeline() {
     return new Date(ts).toLocaleDateString(undefined, {
       month: "short",
       day: "numeric",
-      year: "numeric"
+      year: "numeric",
     });
   };
 
   return (
     <>
-      <Topbar title="Threat History Timeline" subtitle="Chronological flow of scanned navigations and threat detections" />
+      <Topbar
+        title="Threat History Timeline"
+        subtitle="Chronological flow of scanned navigations and threat detections"
+      />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
         {!isExtensionInstalled ? (
           <EmptyState isInstalled={isExtensionInstalled} />
@@ -105,7 +108,9 @@ function ChronologicalTimeline() {
 
             {sortedThreats.length === 0 ? (
               <div className="text-center py-12 glass rounded-2xl">
-                <p className="text-sm text-muted-foreground">No events found matching the selected filter.</p>
+                <p className="text-sm text-muted-foreground">
+                  No events found matching the selected filter.
+                </p>
               </div>
             ) : (
               <div className="relative pl-6 md:pl-8 border-l border-border/60 ml-4 py-2 space-y-8">
@@ -116,10 +121,14 @@ function ChronologicalTimeline() {
                   return (
                     <div key={t.id} className="relative group">
                       {/* Timeline point */}
-                      <span className={`absolute -left-[31px] md:-left-[39px] top-1.5 flex h-4 w-4 rounded-full border-2 border-background ${colors.dot} ${colors.glow} z-10 transition-transform group-hover:scale-125`} />
+                      <span
+                        className={`absolute -left-[31px] md:-left-[39px] top-1.5 flex h-4 w-4 rounded-full border-2 border-background ${colors.dot} ${colors.glow} z-10 transition-transform group-hover:scale-125`}
+                      />
 
                       {/* Event container */}
-                      <div className={`glass rounded-xl p-4 md:p-6 transition-all duration-300 hover:border-cyber-cyan/35 hover:shadow-[0_4px_20px_rgba(6,182,212,0.06)]`}>
+                      <div
+                        className={`glass rounded-xl p-4 md:p-6 transition-all duration-300 hover:border-cyber-cyan/35 hover:shadow-[0_4px_20px_rgba(6,182,212,0.06)]`}
+                      >
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                           {/* Left context */}
                           <div className="space-y-1">
@@ -143,13 +152,21 @@ function ChronologicalTimeline() {
                           {/* Right score indicator */}
                           <div className="flex items-center gap-4 shrink-0">
                             <div className="text-left md:text-right">
-                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Threat Score</p>
-                              <p className="text-xl md:text-2xl font-bold font-mono text-cyber-warning">{t.score}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                Threat Score
+                              </p>
+                              <p className="text-xl md:text-2xl font-bold font-mono text-cyber-warning">
+                                {t.score}
+                              </p>
                             </div>
                             <div className="h-10 w-px bg-border/60" />
                             <div className="text-left">
-                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Trust Index</p>
-                              <p className="text-xl md:text-2xl font-bold font-mono text-cyber-success">{t.trustScore}</p>
+                              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                Trust Index
+                              </p>
+                              <p className="text-xl md:text-2xl font-bold font-mono text-cyber-success">
+                                {t.trustScore}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -157,14 +174,21 @@ function ChronologicalTimeline() {
                         {/* Additional Reason evidence list */}
                         {t.reasons && t.reasons.length > 0 && (
                           <div className="mt-4 pt-4 border-t border-border/40">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Detections / Evidence</p>
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                              Detections / Evidence
+                            </p>
                             <ul className="space-y-1.5">
                               {t.reasons.map((r, rIdx) => {
                                 const isThreat = t.risk === "DANGEROUS" || t.risk === "SUSPICIOUS";
                                 const Icon = isThreat ? AlertTriangle : ShieldCheck;
-                                const iconCls = isThreat ? "text-cyber-danger" : "text-cyber-success";
+                                const iconCls = isThreat
+                                  ? "text-cyber-danger"
+                                  : "text-cyber-success";
                                 return (
-                                  <li key={rIdx} className="text-xs flex items-start gap-2 text-foreground/90">
+                                  <li
+                                    key={rIdx}
+                                    className="text-xs flex items-start gap-2 text-foreground/90"
+                                  >
                                     <Icon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${iconCls}`} />
                                     <span>{r}</span>
                                   </li>

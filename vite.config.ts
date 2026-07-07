@@ -5,5 +5,10 @@ import tailwindVite from "@tailwindcss/vite";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 export default defineConfig({
-  plugins: [TanStackRouterVite({ routesDirectory: "src/routes" }), react(), tsconfigPaths(), tailwindVite()],
+  plugins: [
+    TanStackRouterVite({ routesDirectory: "src/routes" }),
+    react(),
+    tsconfigPaths(),
+    tailwindVite(),
+  ],
 });

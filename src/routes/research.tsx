@@ -3,25 +3,29 @@ import { useState } from "react";
 import { Topbar } from "@/components/veritas/topbar";
 import { useExtensionInstalled } from "@/lib/veritas/store";
 import { EmptyState } from "@/components/veritas/empty-state";
-import { 
-  Volume2, 
-  MessageSquare, 
-  Bot, 
-  Monitor, 
-  Code, 
-  ShieldAlert, 
-  CheckCircle, 
-  Radio, 
+import {
+  Volume2,
+  MessageSquare,
+  Bot,
+  Monitor,
+  Code,
+  ShieldAlert,
+  CheckCircle,
+  Radio,
   Cpu,
-  Brain, 
-  RefreshCw 
+  Brain,
+  RefreshCw,
 } from "lucide-react";
 
 export const Route = createFileRoute("/research")({
   head: () => ({
     meta: [
       { title: "Research Lab — VeritasShield AI" },
-      { name: "description", content: "Advanced heuristics, voice clone detection, review farm detection, and obfuscated script analysis." },
+      {
+        name: "description",
+        content:
+          "Advanced heuristics, voice clone detection, review farm detection, and obfuscated script analysis.",
+      },
     ],
   }),
   component: ResearchLab,
@@ -62,15 +66,22 @@ function ResearchLab() {
     setVoiceScanning(true);
     setVoiceResult(null);
     setTimeout(() => {
-      const isAI = audioInput.includes("ai-voice") || audioInput.includes("synth") || audioInput.includes("clone") || audioInput.length % 2 === 0;
+      const isAI =
+        audioInput.includes("ai-voice") ||
+        audioInput.includes("synth") ||
+        audioInput.includes("clone") ||
+        audioInput.length % 2 === 0;
       setVoiceResult({
         detected: isAI,
         confidence: isAI ? 92 : 12,
         pitchVariance: isAI ? "Flat (low variance)" : "Normal dynamic range",
         rhythmPattern: isAI ? "Mechanical pattern matching" : "Human natural cadence",
-        reasons: isAI 
-          ? ["Low frequency pitch truncation detected", "Boilerplate vocoder phase alignment matched"]
-          : ["Natural speech fluctuations matched"]
+        reasons: isAI
+          ? [
+              "Low frequency pitch truncation detected",
+              "Boilerplate vocoder phase alignment matched",
+            ]
+          : ["Natural speech fluctuations matched"],
       });
       setVoiceScanning(false);
     }, 1200);
@@ -81,15 +92,29 @@ function ResearchLab() {
     setReviewResult(null);
     setTimeout(() => {
       const text = reviewText.toLowerCase();
-      const aiWords = ["delve", "testament", "moreover", "highly recommend", "game changer", "revolutionize"];
-      const matched = aiWords.filter(w => text.includes(w));
+      const aiWords = [
+        "delve",
+        "testament",
+        "moreover",
+        "highly recommend",
+        "game changer",
+        "revolutionize",
+      ];
+      const matched = aiWords.filter((w) => text.includes(w));
       const score = Math.min(matched.length * 25 + (text.length > 200 ? 10 : 0), 100);
 
       setReviewResult({
         score,
-        classification: score > 60 ? "Highly suspicious of AI structure" : score > 30 ? "Boilerplate layout detected" : "Natural variety",
+        classification:
+          score > 60
+            ? "Highly suspicious of AI structure"
+            : score > 30
+              ? "Boilerplate layout detected"
+              : "Natural variety",
         matchedWords: matched,
-        sentimentRepetition: text.split(" ").length > 10 && new Set(text.split(" ")).size < text.split(" ").length * 0.6
+        sentimentRepetition:
+          text.split(" ").length > 10 &&
+          new Set(text.split(" ")).size < text.split(" ").length * 0.6,
       });
       setReviewScanning(false);
     }, 1000);
@@ -114,7 +139,7 @@ function ResearchLab() {
       setChatResult({
         redFlags,
         isScamChat: redFlags.length > 0,
-        threatScore: redFlags.length * 35
+        threatScore: redFlags.length * 35,
       });
       setChatScanning(false);
     }, 1200);
@@ -136,7 +161,7 @@ function ResearchLab() {
         matches.push("Boilerplate hex-packed script packing matched");
         score += 65;
       }
-      if (text.includes("iframe") && (text.includes("hidden") || text.includes("width=\"0\""))) {
+      if (text.includes("iframe") && (text.includes("hidden") || text.includes('width="0"'))) {
         matches.push("Hidden iframe element embedding code");
         score += 35;
       }
@@ -156,12 +181,12 @@ function ResearchLab() {
       { log: "12:02:10 — Simulating active tab hooks...", score: 5 },
       { log: "12:02:11 — Check tab title modifications (tab hijacking)...", score: 25 },
       { log: "12:02:12 — Check popups triggered on page load (popup flooding)...", score: 65 },
-      { log: "12:02:13 — Check forced redirects via window.location override...", score: 85 }
+      { log: "12:02:13 — Check forced redirects via window.location override...", score: 85 },
     ];
 
     steps.forEach((step, idx) => {
       setTimeout(() => {
-        setBehaviorLogs(prev => [...prev, step.log]);
+        setBehaviorLogs((prev) => [...prev, step.log]);
         setBehaviorScore(step.score);
       }, idx * 600);
     });
@@ -169,13 +194,15 @@ function ResearchLab() {
 
   return (
     <>
-      <Topbar title="Advanced Research Lab" subtitle="Experimental AI models, speech analyzers, and scripts security inspection" />
+      <Topbar
+        title="Advanced Research Lab"
+        subtitle="Experimental AI models, speech analyzers, and scripts security inspection"
+      />
       <main className="flex-1 space-y-6 p-4 lg:p-8">
         {!isExtensionInstalled ? (
           <EmptyState isInstalled={isExtensionInstalled} />
         ) : (
           <div className="space-y-6">
-            
             {/* Header Lab Panel */}
             <div className="glass rounded-2xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[var(--shadow-card)]">
               <div className="space-y-1">
@@ -183,10 +210,11 @@ function ResearchLab() {
                   <Brain className="h-5.5 w-5.5 text-cyber-cyan" /> Heuristics Research vaults
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Test and inspect cutting-edge cyber-forensics classifiers for non-standard browser threat telemetry.
+                  Test and inspect cutting-edge cyber-forensics classifiers for non-standard browser
+                  threat telemetry.
                 </p>
               </div>
-              
+
               {/* Tab Selector */}
               <div className="flex flex-wrap gap-2">
                 {[
@@ -194,7 +222,7 @@ function ResearchLab() {
                   { id: "reviews", label: "Fake Reviews", icon: MessageSquare },
                   { id: "chats", label: "Scam Chats", icon: Bot },
                   { id: "behavior", label: "Behavior Analyzer", icon: Monitor },
-                  { id: "scripts", label: "Script Analyzer", icon: Code }
+                  { id: "scripts", label: "Script Analyzer", icon: Code },
                 ].map((t) => {
                   const Icon = t.icon;
                   const active = activeTab === t.id;
@@ -218,13 +246,13 @@ function ResearchLab() {
 
             {/* Core Workspace Cards */}
             <div className="grid grid-cols-1 gap-6">
-              
               {/* Voice Clone Analyzer */}
               {activeTab === "voice" && (
                 <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div>
                     <h3 className="text-base font-semibold flex items-center gap-2">
-                      <Radio className="h-4.5 w-4.5 text-cyber-cyan animate-pulse" /> Voice Clone Monitoring (Beta)
+                      <Radio className="h-4.5 w-4.5 text-cyber-cyan animate-pulse" /> Voice Clone
+                      Monitoring (Beta)
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Inspect Speech streams and Audio assets for synthetic generation patterns.
@@ -234,7 +262,9 @@ function ResearchLab() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-foreground/80">Audio Resource URL or Identifier</label>
+                        <label className="text-xs font-semibold text-foreground/80">
+                          Audio Resource URL or Identifier
+                        </label>
                         <input
                           type="text"
                           value={audioInput}
@@ -248,7 +278,11 @@ function ResearchLab() {
                         disabled={voiceScanning || !audioInput.trim()}
                         className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-4 py-2 text-xs font-semibold text-background transition-transform active:scale-95"
                       >
-                        {voiceScanning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+                        {voiceScanning ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Volume2 className="h-4 w-4" />
+                        )}
                         Inspect Voice Stream
                       </button>
                     </div>
@@ -261,7 +295,9 @@ function ResearchLab() {
                         <div className="space-y-3.5">
                           <div className="flex justify-between items-center text-xs">
                             <span>Synthetic Voice:</span>
-                            <span className={`font-bold ${voiceResult.detected ? "text-cyber-danger" : "text-cyber-success"}`}>
+                            <span
+                              className={`font-bold ${voiceResult.detected ? "text-cyber-danger" : "text-cyber-success"}`}
+                            >
                               {voiceResult.detected ? "Flagged (AI Generated)" : "Verified Natural"}
                             </span>
                           </div>
@@ -270,15 +306,26 @@ function ResearchLab() {
                             <span className="font-mono">{voiceResult.confidence}%</span>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[10px] text-muted-foreground uppercase">Speech Dynamics</p>
-                            <p className="text-xs text-foreground font-mono">{voiceResult.pitchVariance}</p>
-                            <p className="text-xs text-foreground font-mono">{voiceResult.rhythmPattern}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase">
+                              Speech Dynamics
+                            </p>
+                            <p className="text-xs text-foreground font-mono">
+                              {voiceResult.pitchVariance}
+                            </p>
+                            <p className="text-xs text-foreground font-mono">
+                              {voiceResult.rhythmPattern}
+                            </p>
                           </div>
                           {voiceResult.reasons.length > 0 && (
                             <div className="pt-2 border-t border-border/40">
-                              <p className="text-[10px] text-muted-foreground uppercase mb-1">Evidences</p>
+                              <p className="text-[10px] text-muted-foreground uppercase mb-1">
+                                Evidences
+                              </p>
                               {voiceResult.reasons.map((r: string, idx: number) => (
-                                <p key={idx} className="text-[11px] text-foreground/90 flex gap-1.5 items-start">
+                                <p
+                                  key={idx}
+                                  className="text-[11px] text-foreground/90 flex gap-1.5 items-start"
+                                >
                                   <span className="text-cyber-cyan">•</span> {r}
                                 </p>
                               ))}
@@ -286,7 +333,9 @@ function ResearchLab() {
                           )}
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground py-8 text-center">Analyze an audio input to output statistics.</p>
+                        <p className="text-xs text-muted-foreground py-8 text-center">
+                          Analyze an audio input to output statistics.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -298,17 +347,21 @@ function ResearchLab() {
                 <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div>
                     <h3 className="text-base font-semibold flex items-center gap-2">
-                      <MessageSquare className="h-4.5 w-4.5 text-cyber-cyan" /> Fake Review & Review Farm Detector
+                      <MessageSquare className="h-4.5 w-4.5 text-cyber-cyan" /> Fake Review & Review
+                      Farm Detector
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Inspect text elements for boilerplates, sentiment manipulation, and AI-writing vocabulary footprints.
+                      Inspect text elements for boilerplates, sentiment manipulation, and AI-writing
+                      vocabulary footprints.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-foreground/80">Review Content Paste</label>
+                        <label className="text-xs font-semibold text-foreground/80">
+                          Review Content Paste
+                        </label>
                         <textarea
                           rows={4}
                           value={reviewText}
@@ -322,7 +375,11 @@ function ResearchLab() {
                         disabled={reviewScanning || !reviewText.trim()}
                         className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-4 py-2 text-xs font-semibold text-background transition-transform active:scale-95"
                       >
-                        {reviewScanning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <MessageSquare className="h-4 w-4" />}
+                        {reviewScanning ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <MessageSquare className="h-4 w-4" />
+                        )}
                         Scan Sentiment Patterns
                       </button>
                     </div>
@@ -335,24 +392,35 @@ function ResearchLab() {
                         <div className="space-y-3.5">
                           <div className="flex justify-between items-center text-xs">
                             <span>AI Likelihood Score:</span>
-                            <span className={`font-mono font-bold ${reviewResult.score > 60 ? "text-cyber-danger" : "text-cyber-success"}`}>
+                            <span
+                              className={`font-mono font-bold ${reviewResult.score > 60 ? "text-cyber-danger" : "text-cyber-success"}`}
+                            >
                               {reviewResult.score}%
                             </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
                             <span>Analysis:</span>
-                            <span className="font-semibold text-xs">{reviewResult.classification}</span>
+                            <span className="font-semibold text-xs">
+                              {reviewResult.classification}
+                            </span>
                           </div>
                           <div className="flex justify-between items-center text-xs">
                             <span>Repetitive Vocabulary:</span>
-                            <span>{reviewResult.sentimentRepetition ? "Flagged (High)" : "Normal"}</span>
+                            <span>
+                              {reviewResult.sentimentRepetition ? "Flagged (High)" : "Normal"}
+                            </span>
                           </div>
                           {reviewResult.matchedWords.length > 0 && (
                             <div className="pt-2 border-t border-border/40">
-                              <p className="text-[10px] text-muted-foreground uppercase mb-1">AI footprints matched</p>
+                              <p className="text-[10px] text-muted-foreground uppercase mb-1">
+                                AI footprints matched
+                              </p>
                               <div className="flex flex-wrap gap-1.5">
                                 {reviewResult.matchedWords.map((w: string, idx: number) => (
-                                  <span key={idx} className="text-[10px] px-2 py-0.5 rounded bg-secondary/80 text-muted-foreground font-mono">
+                                  <span
+                                    key={idx}
+                                    className="text-[10px] px-2 py-0.5 rounded bg-secondary/80 text-muted-foreground font-mono"
+                                  >
                                     {w}
                                   </span>
                                 ))}
@@ -361,7 +429,9 @@ function ResearchLab() {
                           )}
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground py-8 text-center">Analyze a review text block to output metrics.</p>
+                        <p className="text-xs text-muted-foreground py-8 text-center">
+                          Analyze a review text block to output metrics.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -373,17 +443,21 @@ function ResearchLab() {
                 <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div>
                     <h3 className="text-base font-semibold flex items-center gap-2">
-                      <Bot className="h-4.5 w-4.5 text-cyber-cyan" /> Fake Support Chat & Widget Detector
+                      <Bot className="h-4.5 w-4.5 text-cyber-cyan" /> Fake Support Chat & Widget
+                      Detector
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Inspect embedded chatbot configurations for social engineering and remote control scam patterns.
+                      Inspect embedded chatbot configurations for social engineering and remote
+                      control scam patterns.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-foreground/80">Chat widget transcript or Script code snippet</label>
+                        <label className="text-xs font-semibold text-foreground/80">
+                          Chat widget transcript or Script code snippet
+                        </label>
                         <textarea
                           rows={4}
                           value={chatCode}
@@ -397,7 +471,11 @@ function ResearchLab() {
                         disabled={chatScanning || !chatCode.trim()}
                         className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-4 py-2 text-xs font-semibold text-background transition-transform active:scale-95"
                       >
-                        {chatScanning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+                        {chatScanning ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Bot className="h-4 w-4" />
+                        )}
                         Inspect Support Widget
                       </button>
                     </div>
@@ -410,7 +488,9 @@ function ResearchLab() {
                         <div className="space-y-3.5">
                           <div className="flex justify-between items-center text-xs">
                             <span>Threat Level:</span>
-                            <span className={`font-bold ${chatResult.isScamChat ? "text-cyber-danger" : "text-cyber-success"}`}>
+                            <span
+                              className={`font-bold ${chatResult.isScamChat ? "text-cyber-danger" : "text-cyber-success"}`}
+                            >
                               {chatResult.isScamChat ? "Critical Red Flags" : "Safe Class"}
                             </span>
                           </div>
@@ -420,9 +500,14 @@ function ResearchLab() {
                           </div>
                           {chatResult.redFlags.length > 0 ? (
                             <div className="pt-2 border-t border-border/40">
-                              <p className="text-[10px] text-muted-foreground uppercase mb-1.5">Flagged dialog components</p>
+                              <p className="text-[10px] text-muted-foreground uppercase mb-1.5">
+                                Flagged dialog components
+                              </p>
                               {chatResult.redFlags.map((f: string, idx: number) => (
-                                <p key={idx} className="text-[11px] text-cyber-danger bg-cyber-danger/5 border border-cyber-danger/20 rounded p-2 mb-2 leading-relaxed">
+                                <p
+                                  key={idx}
+                                  className="text-[11px] text-cyber-danger bg-cyber-danger/5 border border-cyber-danger/20 rounded p-2 mb-2 leading-relaxed"
+                                >
                                   {f}
                                 </p>
                               ))}
@@ -434,7 +519,9 @@ function ResearchLab() {
                           )}
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground py-8 text-center">Analyze a chat widget snippet to inspect.</p>
+                        <p className="text-xs text-muted-foreground py-8 text-center">
+                          Analyze a chat widget snippet to inspect.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -446,7 +533,8 @@ function ResearchLab() {
                 <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div>
                     <h3 className="text-base font-semibold flex items-center gap-2">
-                      <Monitor className="h-4.5 w-4.5 text-cyber-cyan" /> Tab Hijacking & Popup Behavior Simulator
+                      <Monitor className="h-4.5 w-4.5 text-cyber-cyan" /> Tab Hijacking & Popup
+                      Behavior Simulator
                     </h3>
                     <p className="text-xs text-muted-foreground">
                       Track and test forced redirects, page popups count, and title swap behavior.
@@ -456,7 +544,8 @@ function ResearchLab() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-4">
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Start browser simulation model to trigger mock sequences representing popup flooding, tab context swapping, and forced navigation hooks.
+                        Start browser simulation model to trigger mock sequences representing popup
+                        flooding, tab context swapping, and forced navigation hooks.
                       </p>
                       <button
                         onClick={runBehaviorSimulation}
@@ -479,14 +568,26 @@ function ResearchLab() {
                         <Cpu className="h-4 w-4 text-cyber-cyan" /> Behavior score
                       </h4>
                       <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Anomaly score during behavior script trace:</p>
-                        <p className="text-3xl font-extrabold font-mono text-cyber-warning">{behaviorScore}</p>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                          behaviorScore > 75 ? "bg-cyber-danger/12 text-cyber-danger" :
-                          behaviorScore > 35 ? "bg-cyber-warning/12 text-cyber-warning" :
-                          "bg-cyber-success/12 text-cyber-success"
-                        }`}>
-                          {behaviorScore > 75 ? "Hijack Confirmed" : behaviorScore > 35 ? "Suspicious" : "Normal state"}
+                        <p className="text-xs text-muted-foreground">
+                          Anomaly score during behavior script trace:
+                        </p>
+                        <p className="text-3xl font-extrabold font-mono text-cyber-warning">
+                          {behaviorScore}
+                        </p>
+                        <span
+                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                            behaviorScore > 75
+                              ? "bg-cyber-danger/12 text-cyber-danger"
+                              : behaviorScore > 35
+                                ? "bg-cyber-warning/12 text-cyber-warning"
+                                : "bg-cyber-success/12 text-cyber-success"
+                          }`}
+                        >
+                          {behaviorScore > 75
+                            ? "Hijack Confirmed"
+                            : behaviorScore > 35
+                              ? "Suspicious"
+                              : "Normal state"}
                         </span>
                       </div>
                     </div>
@@ -499,17 +600,21 @@ function ResearchLab() {
                 <section className="glass rounded-2xl p-6 shadow-[var(--shadow-card)] space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div>
                     <h3 className="text-base font-semibold flex items-center gap-2">
-                      <Code className="h-4.5 w-4.5 text-cyber-cyan" /> JavaScript Obfuscation & Crypto Miner Inspector
+                      <Code className="h-4.5 w-4.5 text-cyber-cyan" /> JavaScript Obfuscation &
+                      Crypto Miner Inspector
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Inspect loaded code blocks for hex packing, miner variables, or script packers.
+                      Inspect loaded code blocks for hex packing, miner variables, or script
+                      packers.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-xs font-semibold text-foreground/80">JavaScript Code block Paste</label>
+                        <label className="text-xs font-semibold text-foreground/80">
+                          JavaScript Code block Paste
+                        </label>
                         <textarea
                           rows={6}
                           value={scriptCode}
@@ -523,7 +628,11 @@ function ResearchLab() {
                         disabled={scriptScanning || !scriptCode.trim()}
                         className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyber-cyan to-primary px-4 py-2 text-xs font-semibold text-background transition-transform active:scale-95"
                       >
-                        {scriptScanning ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Code className="h-4 w-4" />}
+                        {scriptScanning ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Code className="h-4 w-4" />
+                        )}
                         Scan Script Syntax
                       </button>
                     </div>
@@ -536,29 +645,36 @@ function ResearchLab() {
                         <div className="space-y-3.5">
                           <div className="flex justify-between items-center text-xs">
                             <span>Obfuscation / Miner score:</span>
-                            <span className={`font-mono font-bold ${scriptResult.score > 50 ? "text-cyber-danger" : "text-cyber-success"}`}>
+                            <span
+                              className={`font-mono font-bold ${scriptResult.score > 50 ? "text-cyber-danger" : "text-cyber-success"}`}
+                            >
                               {scriptResult.score}%
                             </span>
                           </div>
                           <div className="pt-2 border-t border-border/40 space-y-2">
-                            <p className="text-[10px] text-muted-foreground uppercase">Inspected Signatures</p>
+                            <p className="text-[10px] text-muted-foreground uppercase">
+                              Inspected Signatures
+                            </p>
                             {scriptResult.matches.map((m: string, idx: number) => (
-                              <div key={idx} className="text-[11px] p-2 bg-secondary/40 border border-border/40 rounded leading-relaxed">
+                              <div
+                                key={idx}
+                                className="text-[11px] p-2 bg-secondary/40 border border-border/40 rounded leading-relaxed"
+                              >
                                 {m}
                               </div>
                             ))}
                           </div>
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground py-8 text-center">Analyze a script block to inspect obfuscations.</p>
+                        <p className="text-xs text-muted-foreground py-8 text-center">
+                          Analyze a script block to inspect obfuscations.
+                        </p>
                       )}
                     </div>
                   </div>
                 </section>
               )}
-
             </div>
-
           </div>
         )}
       </main>
