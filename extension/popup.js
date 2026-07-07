@@ -534,6 +534,32 @@ chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
   );
 });
 
+// Real-time listener for background tab scan completions to display immediately without lag
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "local" && currentSite) {
+    const cacheKey = "vc_" + getBaseDomain(currentSite);
+    if (changes[cacheKey]) {
+      const cachedResult = changes[cacheKey].newValue?.result;
+      if (cachedResult) {
+        const result = {
+          host: cachedResult.domain,
+          risk: cachedResult.risk,
+          score: cachedResult.score,
+          trust: cachedResult.trustScore,
+          conf: cachedResult.conf || cachedResult.score,
+          reasons: cachedResult.reasons,
+          modules: cachedResult.modules,
+          module: cachedResult.module,
+        };
+        render(result, true);
+        chrome.storage.local.get(["scanHistory"], ({ scanHistory = [] }) => {
+          updateStatsBar(scanHistory);
+        });
+      }
+    }
+  }
+});
+
 document.getElementById("scanNow").addEventListener("click", async () => {
   const btn = document.getElementById("scanNow");
   btn.textContent = "Scanning...";

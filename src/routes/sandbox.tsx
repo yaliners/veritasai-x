@@ -50,7 +50,9 @@ function ThreatSandbox() {
     if (raw) {
       try {
         setHistory(JSON.parse(raw));
-      } catch (e) {}
+      } catch (e) {
+        // ignore parse error
+      }
     }
   }, []);
 

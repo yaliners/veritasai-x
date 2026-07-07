@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import type { ThreatRecord, TrustedSite, SecuritySettings } from "./types";
+import type { ThreatRecord, TrustedSite, SecuritySettings, Risk } from "./types";
 
 const THREATS_KEY = "veritas:threats";
 const TRUSTED_KEY = "veritas:trusted";
@@ -165,7 +165,7 @@ function loadThreatsFromExtension(): ThreatRecord[] {
           id: `scan_${i}_${s.time}`,
           url: s.url,
           domain: s.domain,
-          risk: s.risk as any,
+          risk: s.risk as Risk,
           score: s.score,
           trustScore: s.trustScore,
           confidence: confValue,

@@ -9,9 +9,53 @@ import {
 } from "./modules/storage.js";
 import { showAlert } from "./modules/alerts.js";
 
+let lastScannedUrl = "";
+let networkVerdictPromise = null;
+let dnsPromise = null;
+let startedUrl = "";
+
+const startNetworkScans = (url) => {
+  if (startedUrl === url) return;
+  startedUrl = url;
+
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    const base = getBaseDomain(host);
+
+    const shouldBypass =
+      host.includes("veritasai-shield.vercel.app") ||
+      host.includes("localhost:") ||
+      host.includes("127.0.0.1:") ||
+      !url.startsWith("http") ||
+      isPermanentSafe(base);
+
+    if (!shouldBypass) {
+      chrome.runtime.sendMessage({ action: "updateBadge", risk: "SCANNING" }).catch(() => {});
+      networkVerdictPromise = getVerdict(url, base);
+      dnsPromise = checkCloudfareDNS(base);
+    } else {
+      networkVerdictPromise = null;
+      dnsPromise = null;
+    }
+  } catch (e) {
+    networkVerdictPromise = null;
+    dnsPromise = null;
+  }
+};
+
+// Start parallel scans immediately at content script load (document_start)
+try {
+  startNetworkScans(window.location.href);
+} catch (e) {
+  console.warn("Failed to start initial background scans:", e);
+}
+
 const initScan = async () => {
   try {
     const fullUrl = window.location.href;
+    if (fullUrl === lastScannedUrl) return;
+    lastScannedUrl = fullUrl;
+
     const hostname = window.location.hostname.toLowerCase();
     const baseDomain = getBaseDomain(hostname);
 
@@ -27,7 +71,10 @@ const initScan = async () => {
       popupAlerts: true,
       overlayAlerts: true,
     };
-    if (controls.autoScan === false) return;
+    if (controls.autoScan === false) {
+      chrome.runtime.sendMessage({ action: "updateBadge", risk: "SAFE" }).catch(() => {});
+      return;
+    }
 
     // If permanent safe or on the personal safe list, bypass scans
     if (isPermanentSafe(baseDomain) || personalSafeList.includes(baseDomain)) {
@@ -59,13 +106,6 @@ const initScan = async () => {
       return;
     }
 
-    chrome.runtime
-      .sendMessage({
-        action: "updateBadge",
-        risk: "SCANNING",
-      })
-      .catch(() => {});
-
     const cached = await getCached(baseDomain);
     if (cached) {
       await saveAndBroadcast({
@@ -75,9 +115,19 @@ const initScan = async () => {
       return;
     }
 
-    // Call serverless proxy
-    const proxyVerdict = await getVerdict(fullUrl, baseDomain);
-    const dns = await checkCloudfareDNS(baseDomain);
+    chrome.runtime
+      .sendMessage({
+        action: "updateBadge",
+        risk: "SCANNING",
+      })
+      .catch(() => {});
+
+    // Ensure scans are started (handles dynamic SPA navigation/timing variations)
+    startNetworkScans(fullUrl);
+
+    // Call serverless proxy (awaiting pre-started promises)
+    const proxyVerdict = networkVerdictPromise ? await networkVerdictPromise : null;
+    const dns = dnsPromise ? await dnsPromise : { flag: 0, reason: null };
     const local = await runLocalModules(settings);
 
     let google = { score: 0, matched: false, reason: null };
