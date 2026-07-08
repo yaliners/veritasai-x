@@ -150,7 +150,7 @@ function SettingsCenter() {
   ];
 
   const controlItems: Array<{
-    key: keyof SecuritySettings["controls"];
+    key: "autoScan" | "popupAlerts" | "overlayAlerts";
     label: string;
     desc: string;
   }> = [
@@ -309,10 +309,13 @@ function SettingsCenter() {
                 >
                   <Save className="h-4 w-4" /> Save Settings
                 </button>
-                <button
+                 <button
                   onClick={() => {
                     if (confirm("Clear threat history?")) {
                       localStorage.removeItem("veritasai_scans");
+                      localStorage.removeItem("veritas:threats");
+                      window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritasai_scans" }));
+                      window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
                       toast.success("Threat history cleared successfully!");
                       setTimeout(() => location.reload(), 800);
                     }
@@ -325,6 +328,7 @@ function SettingsCenter() {
                   onClick={() => {
                     if (confirm("Clear trusted domains?")) {
                       localStorage.removeItem("veritas:trusted");
+                      window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:trusted" }));
                       toast.success("Trusted domains cleared successfully!");
                       setTimeout(() => location.reload(), 800);
                     }
@@ -338,6 +342,8 @@ function SettingsCenter() {
                     if (confirm("Reset entire extension?")) {
                       clearAll();
                       localStorage.removeItem("veritasai_scans");
+                      window.dispatchEvent(new CustomEvent("veritas:update", { detail: "*" }));
+                      window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritasai_scans" }));
                       toast.success("Settings and extension database reset successfully!");
                       setTimeout(() => location.reload(), 800);
                     }

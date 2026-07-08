@@ -1,25 +1,10 @@
 import { useEffect, useState } from "react";
+import type { ThreatRecord, DetectionModule } from "@/lib/veritas/types";
 
-export interface ScanRecord {
-  id: string;
-  url: string;
-  domain: string;
-  risk: "SAFE" | "SUSPICIOUS" | "DANGEROUS" | "TRUSTED";
-  score: number;
-  trustScore: number;
-  confidence: number;
-  aiPrediction: string;
-  mlRisk: string;
-  module: string;
-  reasons: string[];
-  severity: "Critical" | "High" | "Medium" | "Low";
-  timestamp: number;
-  confirmed?: boolean;
-  falsePositive?: boolean;
-}
+export type ScanRecord = ThreatRecord;
 
 export function useVeritasScans() {
-  const [scans, setScans] = useState<ScanRecord[]>([]);
+  const [scans, setScans] = useState<ThreatRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
 
@@ -29,7 +14,7 @@ export function useVeritasScans() {
       if (extData) {
         const rawList = JSON.parse(extData);
         if (Array.isArray(rawList)) {
-          const mapped = rawList.map((s, i) => {
+          const mapped = rawList.map((s: any, i: number) => {
             let confValue = s.score;
             if (s.mlConfidence) {
               const parsed = parseInt(s.mlConfidence);
@@ -45,7 +30,7 @@ export function useVeritasScans() {
               confidence: confValue,
               aiPrediction: s.aiPrediction || "",
               mlRisk: s.mlRisk || "Low",
-              module: s.module || "Trust Engine",
+              module: (s.module || "Trust Engine") as DetectionModule,
               reasons: s.reasons || [],
               severity:
                 s.score >= 85
@@ -58,7 +43,7 @@ export function useVeritasScans() {
               timestamp: s.time || Date.now(),
               confirmed: s.confirmed,
               falsePositive: s.falsePositive,
-            } as ScanRecord;
+            } as ThreatRecord;
           });
           setScans(mapped);
         }

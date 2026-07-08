@@ -196,22 +196,17 @@ export const showAlert = (result, settings) => {
   const alertStyle = settings?.controls?.alertStyle || "Full overlay";
   if (alertStyle === "Badge only") return;
 
-  if (result.risk === "DANGEROUS" && result.score > 85) {
-    if (alertStyle === "Toast only") {
-      showToast(result, "warning");
-    } else {
+  if (alertStyle === "Full overlay") {
+    if (result.risk === "DANGEROUS") {
       showOverlay(result);
+    } else if (result.risk === "SUSPICIOUS") {
+      showToast(result, "caution");
     }
-    return;
-  }
-
-  if (result.risk === "DANGEROUS" && result.score <= 85) {
-    showToast(result, "warning");
-    return;
-  }
-
-  if (result.risk === "SUSPICIOUS") {
-    showToast(result, "caution");
-    return;
+  } else if (alertStyle === "Toast only") {
+    if (result.risk === "DANGEROUS") {
+      showToast(result, "warning");
+    } else if (result.risk === "SUSPICIOUS") {
+      showToast(result, "caution");
+    }
   }
 };

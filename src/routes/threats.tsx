@@ -5,6 +5,7 @@ import { RiskBadge } from "@/components/veritas/risk-badge";
 import { EmptyState } from "@/components/veritas/empty-state";
 import { exportThreatsCSV, downloadCSV, useExtensionInstalled } from "@/lib/veritas/store";
 import { useVeritasScans } from "@/hooks/useVeritasScans";
+import { toast } from "sonner";
 import {
   Search,
   Download,
@@ -14,6 +15,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   ChevronDown,
+  Check,
 } from "lucide-react";
 import type { ThreatRecord, Risk } from "@/lib/veritas/types";
 
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/threats")({
   component: ThreatCenter,
 });
 
-function generateExplanation(threat: any) {
+function generateExplanation(threat: ThreatRecord) {
   const signals: Array<{ text: string; impact: number }> = [];
 
   const baseImpact =
@@ -74,8 +76,52 @@ function ThreatCenter() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Risk | "ALL">("ALL");
   const [showFPOnly, setShowFPOnly] = useState(false);
-  const [selected, setSelected] = useState<any | null>(null);
+  const [selected, setSelected] = useState<ThreatRecord | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const updateThreatStatus = (id: string, confirmed: boolean, falsePositive: boolean) => {
+    try {
+      const extData = localStorage.getItem("veritasai_scans");
+      if (extData) {
+        const rawList = JSON.parse(extData);
+        if (Array.isArray(rawList)) {
+          const updated = rawList.map((s, i) => {
+            const computedId = s.id || `scan_${i}_${s.time || Date.now()}`;
+            if (computedId === id || s.id === id) {
+              if (falsePositive) {
+                return {
+                  ...s,
+                  confirmed: false,
+                  falsePositive: true,
+                  risk: "SAFE",
+                  score: 0,
+                  trustScore: 100,
+                  severity: "Low",
+                  aiPrediction: "No threats detected (marked False Positive)",
+                  reasons: ["User marked false positive"],
+                };
+              } else {
+                return {
+                  ...s,
+                  confirmed: true,
+                  falsePositive: false,
+                };
+              }
+            }
+            return s;
+          });
+          localStorage.setItem("veritasai_scans", JSON.stringify(updated));
+          window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritasai_scans" }));
+          toast.success(falsePositive ? "Marked as False Positive" : "Threat confirmed", {
+            description: "Accuracy metrics updated accordingly.",
+          });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to update status.");
+    }
+  };
 
   const filtered = useMemo(() => {
     const sortedByTime = [...threats].sort((a, b) => b.timestamp - a.timestamp);
@@ -149,7 +195,7 @@ function ThreatCenter() {
               </div>
               <button
                 onClick={() =>
-                  downloadCSV("veritas-threats.csv", exportThreatsCSV(filtered as any))
+                  downloadCSV("veritas-threats.csv", exportThreatsCSV(filtered))
                 }
                 className="inline-flex items-center gap-2 rounded-lg border border-cyber-cyan/40 bg-cyber-cyan/10 px-3 py-1.5 text-xs font-semibold text-cyber-cyan hover:bg-cyber-cyan/20"
               >
@@ -173,7 +219,7 @@ function ThreatCenter() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((t: any) => (
+                  {filtered.map((t: ThreatRecord) => (
                     <>
                       <tr
                         key={t.id}
@@ -219,7 +265,11 @@ function ThreatCenter() {
                       {expandedId === t.id && (
                         <tr className="border-b border-border/30">
                           <td colSpan={9} className="py-4 px-4">
-                            <ExplanationPanel threat={t} onDismiss={() => setExpandedId(null)} />
+                            <ExplanationPanel
+                              threat={t}
+                              onDismiss={() => setExpandedId(null)}
+                              onUpdateStatus={updateThreatStatus}
+                            />
                           </td>
                         </tr>
                       )}
@@ -281,7 +331,7 @@ function ThreatCenter() {
                 title="Why flagged"
               >
                 <ul className="space-y-1.5">
-                  {selected.reasons.map((r) => {
+                  {selected.reasons.map((r: string) => {
                     const isChecked = r.startsWith("✓");
                     const text = isChecked ? r.substring(1).trim() : r;
                     return (
@@ -328,7 +378,15 @@ function ThreatCenter() {
   );
 }
 
-function ExplanationPanel({ threat, onDismiss }: { threat: ThreatRecord; onDismiss: () => void }) {
+function ExplanationPanel({
+  threat,
+  onDismiss,
+  onUpdateStatus,
+}: {
+  threat: ThreatRecord;
+  onDismiss: () => void;
+  onUpdateStatus: (id: string, confirmed: boolean, falsePositive: boolean) => void;
+}) {
   const { signals, action } = generateExplanation(threat);
 
   const borderColor = {
@@ -363,6 +421,30 @@ function ExplanationPanel({ threat, onDismiss }: { threat: ThreatRecord; onDismi
       <div className="rounded-lg bg-cyber-cyan/5 border border-cyber-cyan/30 p-4 mb-4">
         <p className="text-xs font-semibold text-cyber-cyan mb-2">What to do</p>
         <p className="text-xs text-foreground/80 leading-relaxed">{action}</p>
+      </div>
+
+      {/* Accuracy Verification Controls */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <button
+          onClick={() => onUpdateStatus(threat.id, true, false)}
+          className={`flex-1 px-3 py-2 text-xs font-bold rounded-lg border transition-all ${
+            threat.confirmed
+              ? "border-cyber-success bg-cyber-success/15 text-cyber-success shadow-[inset_0_0_8px_rgba(34,197,94,0.15)]"
+              : "border-border/40 bg-background/40 hover:bg-cyber-success/10 hover:text-cyber-success text-muted-foreground"
+          }`}
+        >
+          {threat.confirmed ? "✓ Threat Confirmed" : "Confirm Threat"}
+        </button>
+        <button
+          onClick={() => onUpdateStatus(threat.id, false, true)}
+          className={`flex-1 px-3 py-2 text-xs font-bold rounded-lg border transition-all ${
+            threat.falsePositive
+              ? "border-cyber-danger bg-cyber-danger/15 text-cyber-danger shadow-[inset_0_0_8px_rgba(239,68,68,0.15)]"
+              : "border-border/40 bg-background/40 hover:bg-cyber-danger/10 hover:text-cyber-danger text-muted-foreground"
+          }`}
+        >
+          {threat.falsePositive ? "✗ Flagged False Positive" : "Report False Positive"}
+        </button>
       </div>
 
       <button

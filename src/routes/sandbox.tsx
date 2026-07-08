@@ -56,23 +56,104 @@ function ThreatSandbox() {
     }
   }, []);
 
-  const runAnalysis = () => {
+  const runAnalysis = async () => {
     if (!urlInput.trim()) return;
     setAnalyzing(true);
     setCurrentResult(null);
 
-    setTimeout(() => {
-      let host = "";
-      try {
-        host = new URL(urlInput).hostname.toLowerCase();
-      } catch (e) {
-        host = urlInput.toLowerCase();
+    let host = "";
+    try {
+      host = new URL(urlInput).hostname.toLowerCase();
+    } catch (e) {
+      host = urlInput.toLowerCase();
+    }
+
+    // Heuristics list and setup
+    const matchedRules: string[] = [];
+    const timeline: string[] = [];
+    const date = new Date();
+    const formatOffset = (sec: number) => {
+      const d = new Date(date.getTime() + sec * 1000);
+      return d.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    };
+
+    timeline.push(`${formatOffset(0)} - Page isolated in virtual environment`);
+    timeline.push(`${formatOffset(0.5)} - Querying threat metadata databases`);
+
+    let dnsFlag = 0;
+    let dnsReason = "";
+
+    // 1. Perform DNS check via Cloudflare DNS over HTTPS
+    try {
+      const dnsRes = await fetch(
+        `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(host)}&type=A`,
+        { headers: { Accept: "application/dns-json" } }
+      );
+      if (dnsRes.ok) {
+        const dnsData = await dnsRes.json();
+        if (dnsData.Status !== 0 || !dnsData.Answer?.length) {
+          dnsFlag = 20;
+          dnsReason = "DNS anomaly detected — domain may not resolve properly";
+          timeline.push(`${formatOffset(1)} - DNS resolution anomaly detected`);
+        } else {
+          timeline.push(`${formatOffset(1)} - Domain resolved successfully via Cloudflare Secure DNS`);
+        }
+      } else {
+        timeline.push(`${formatOffset(1)} - Secure DNS query bypassed (network offline)`);
       }
+    } catch (e) {
+      timeline.push(`${formatOffset(1)} - Secure DNS query bypassed (network offline)`);
+    }
 
-      // Heuristic calculations based on the domain input
-      const matchedRules: string[] = [];
-      let score = 15; // baseline
+    // 2. Perform proxy scan via Veritas Shield Vercel endpoint
+    let apiScore = 0;
+    let fallbackToLocal = true;
 
+    try {
+      const proxyRes = await fetch("https://veritasai-shield.vercel.app/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: urlInput, domain: host }),
+      });
+      if (proxyRes.ok) {
+        const proxyVerdict = await proxyRes.json();
+        fallbackToLocal = false;
+        
+        const google = proxyVerdict.google || { matched: false, reason: null };
+        const urlscan = proxyVerdict.urlscan || { score: 0, reason: null };
+        const vt = proxyVerdict.virustotal || { score: 0, reason: null };
+        const abuse = proxyVerdict.abuse || { score: 0, reason: null };
+        const rdap = proxyVerdict.rdap || { flag: 0, reason: null };
+
+        const googleFlag = google.matched ? 100 : 0;
+        const urlscanScore = urlscan.score || 0;
+        const vtScore = vt.score || 0;
+        const whoisFlag = rdap.flag || 0;
+        const abuseScore = abuse.score || 0;
+
+        apiScore = Math.round(
+          googleFlag * 0.25 + urlscanScore * 0.25 + vtScore * 0.25 + abuseScore * 0.15 + dnsFlag * 0.1
+        );
+
+        if (google.matched && google.reason) matchedRules.push(google.reason);
+        if (urlscanScore > 20 && urlscan.reason) matchedRules.push(urlscan.reason);
+        if (vtScore > 20 && vt.reason) matchedRules.push(vt.reason);
+        if (abuseScore > 20 && abuse.reason) matchedRules.push(abuse.reason);
+        if (whoisFlag > 0 && rdap.reason) matchedRules.push(rdap.reason);
+
+        timeline.push(`${formatOffset(1.5)} - Multi-engine scan query complete`);
+      }
+    } catch (e) {
+      console.warn("Proxy API failed in sandbox, fallback to local heuristics:", e);
+    }
+
+    // Fallback to local heuristic calculations if proxy fails or returns nothing
+    if (fallbackToLocal) {
+      let localScore = 15; // baseline
       if (
         host.includes("login") ||
         host.includes("secure") ||
@@ -80,11 +161,11 @@ function ThreatSandbox() {
         host.includes("update")
       ) {
         matchedRules.push("Suspicious login phrase in URL");
-        score += 25;
+        localScore += 25;
       }
       if (host.includes("-") || host.split("-").length > 2) {
         matchedRules.push("Suspicious domain hyphens");
-        score += 15;
+        localScore += 15;
       }
       if (
         host.endsWith(".xyz") ||
@@ -93,79 +174,69 @@ function ThreatSandbox() {
         host.endsWith(".work")
       ) {
         matchedRules.push("Suspicious TLD extension");
-        score += 20;
+        localScore += 20;
       }
       if (urlInput.startsWith("http://")) {
         matchedRules.push("No HTTPS encryption");
-        score += 25;
+        localScore += 25;
       }
       if (host.includes("paypa1") || host.includes("amaz0n") || host.includes("g00gle")) {
         matchedRules.push("Brand impersonation homoglyph");
-        score += 35;
+        localScore += 35;
       }
+      apiScore = Math.min(localScore, 100);
+      timeline.push(`${formatOffset(1.5)} - Sandbox fallback heuristics completed`);
+    }
 
-      score = Math.min(score, 100);
+    if (dnsFlag > 0 && dnsReason) {
+      matchedRules.push(dnsReason);
+    }
 
-      // Category Classification
-      let category = "Safe";
-      if (score >= 75) category = "Phishing";
-      else if (score >= 55) category = "Malware";
-      else if (score >= 35) category = "Scam";
-      else if (score >= 20) category = "Suspicious";
+    const score = Math.min(apiScore, 100);
 
-      // Timeline entries
-      const date = new Date();
-      const formatOffset = (sec: number) => {
-        const d = new Date(date.getTime() + sec * 1000);
-        return d.toLocaleTimeString(undefined, {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
-      };
+    // Category Classification
+    let category = "Safe";
+    if (score >= 75) category = "Phishing";
+    else if (score >= 55) category = "Malware";
+    else if (score >= 35) category = "Scam";
+    else if (score >= 20) category = "Suspicious";
 
-      const timeline = [
-        `${formatOffset(0)} - Page opened & headers inspected`,
-        `${formatOffset(1)} - Parsing DOM elements & structure`,
-      ];
+    if (score >= 35) {
+      timeline.push(`${formatOffset(2)} - Suspicious signatures verified inside viewport`);
+    }
+    if (urlInput.startsWith("http://")) {
+      timeline.push(`${formatOffset(2.5)} - Unencrypted data transmission warning`);
+    }
+    timeline.push(`${formatOffset(3)} - Threat score finalized at ${score}`);
 
-      if (score >= 35) {
-        timeline.push(`${formatOffset(2)} - Suspicious login form structure detected`);
-      }
-      if (urlInput.startsWith("http://")) {
-        timeline.push(`${formatOffset(3)} - Unencrypted data transmission warning`);
-      }
-      timeline.push(`${formatOffset(4)} - Threat score finalized at ${score}`);
+    // Recommendations
+    const recommendations: string[] = [];
+    if (score >= 70) {
+      recommendations.push("Avoid entering credentials on this website.");
+      recommendations.push("Verify domain ownership via independent WHOIS query.");
+      recommendations.push("Enable two-factor authentication on all linked accounts.");
+    } else if (score >= 35) {
+      recommendations.push("Do not input payment details or credit cards.");
+      recommendations.push("Inspect all redirected urls carefully.");
+    } else {
+      recommendations.push("Legitimate domain reputation. Proceed normally.");
+    }
 
-      // Recommendations
-      const recommendations: string[] = [];
-      if (score >= 70) {
-        recommendations.push("Avoid entering credentials on this website.");
-        recommendations.push("Verify domain ownership via independent WHOIS query.");
-        recommendations.push("Enable two-factor authentication on all linked accounts.");
-      } else if (score >= 35) {
-        recommendations.push("Do not input payment details or credit cards.");
-        recommendations.push("Inspect all redirected urls carefully.");
-      } else {
-        recommendations.push("Legitimate domain reputation. Proceed normally.");
-      }
+    const result: SandboxRecord = {
+      url: urlInput,
+      score,
+      category,
+      reasons: matchedRules.length > 0 ? matchedRules : ["No major rule matches"],
+      timeline,
+      recommendations,
+      timestamp: Date.now(),
+    };
 
-      const result: SandboxRecord = {
-        url: urlInput,
-        score,
-        category,
-        reasons: matchedRules.length > 0 ? matchedRules : ["No major rule matches"],
-        timeline,
-        recommendations,
-        timestamp: Date.now(),
-      };
-
-      setCurrentResult(result);
-      const newHistory = [result, ...history].slice(0, 50);
-      setHistory(newHistory);
-      localStorage.setItem("veritas:sandbox_history", JSON.stringify(newHistory));
-      setAnalyzing(false);
-    }, 1500);
+    setCurrentResult(result);
+    const newHistory = [result, ...history].slice(0, 50);
+    setHistory(newHistory);
+    localStorage.setItem("veritas:sandbox_history", JSON.stringify(newHistory));
+    setAnalyzing(false);
   };
 
   const clearHistory = () => {

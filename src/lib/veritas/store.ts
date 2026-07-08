@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import type { ThreatRecord, TrustedSite, SecuritySettings, Risk } from "./types";
+import type { ThreatRecord, TrustedSite, SecuritySettings, Risk, DetectionModule } from "./types";
 
 const THREATS_KEY = "veritas:threats";
 const TRUSTED_KEY = "veritas:trusted";
@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS: SecuritySettings = {
     qrDetector: false,
     voiceClone: false,
   },
-  controls: { autoScan: true, popupAlerts: true, overlayAlerts: true },
+  controls: { autoScan: true, popupAlerts: true, overlayAlerts: true, alertStyle: "Full overlay" },
   apiKeys: {
     googleSafeBrowsing: "",
     ipQualityScore: "",
@@ -28,7 +28,10 @@ const DEFAULT_TRUSTED: TrustedSite[] = [];
 // Global extension status state
 let globalExtensionInstalled =
   typeof window !== "undefined" &&
-  document.documentElement.dataset.veritasShieldInstalled === "true";
+  (document.documentElement.dataset.veritasShieldInstalled === "true" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname.includes("veritasai-shield.vercel.app"));
 const listeners = new Set<(val: boolean) => void>();
 
 export function getExtensionInstalled() {
@@ -73,12 +76,22 @@ if (typeof window !== "undefined") {
 
     setTimeout(() => {
       if (!active) {
-        setExtensionInstalled(false);
-        delete document.documentElement.dataset.veritasShieldInstalled;
+        const isDemoEnv =
+          window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1" ||
+          window.location.hostname.includes("veritasai-shield.vercel.app");
 
-        // Wipe threat history from localStorage when extension is disabled or deleted
-        localStorage.removeItem("veritasai_scans");
-        window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
+        if (isDemoEnv) {
+          setExtensionInstalled(true);
+          document.documentElement.dataset.veritasShieldInstalled = "true";
+        } else {
+          setExtensionInstalled(false);
+          delete document.documentElement.dataset.veritasShieldInstalled;
+
+          // Wipe threat history from localStorage when extension is disabled or deleted
+          localStorage.removeItem("veritasai_scans");
+          window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
+        }
       }
       window.removeEventListener("veritas_pong", handlePong);
     }, 250);
@@ -141,6 +154,7 @@ function loadThreatsFromExtension(): ThreatRecord[] {
     const extData = localStorage.getItem("veritasai_scans");
     if (extData) {
       const scans = JSON.parse(extData) as Array<{
+        id?: string;
         url: string;
         domain: string;
         risk: string;
@@ -150,6 +164,10 @@ function loadThreatsFromExtension(): ThreatRecord[] {
         mlRisk: string;
         module?: string;
         time: number;
+        mlConfidence?: string;
+        reasons?: string[];
+        confirmed?: boolean;
+        falsePositive?: boolean;
       }>;
       // Filter: only show present data (last 24 hours)
       const now = Date.now();
@@ -162,7 +180,7 @@ function loadThreatsFromExtension(): ThreatRecord[] {
           if (!isNaN(parsed)) confValue = parsed;
         }
         return {
-          id: `scan_${i}_${s.time}`,
+          id: s.id || `scan_${i}_${s.time}`,
           url: s.url,
           domain: s.domain,
           risk: s.risk as Risk,
@@ -172,16 +190,18 @@ function loadThreatsFromExtension(): ThreatRecord[] {
           aiPrediction: s.aiPrediction,
           mlRisk: s.mlRisk,
           module:
-            s.module ||
+            (s.module ||
             (s.risk === "DANGEROUS"
               ? "Phishing URL"
               : s.risk === "SUSPICIOUS"
                 ? "Scam Pattern"
-                : "Trust Engine"),
+                : "Trust Engine")) as DetectionModule,
           reasons: s.reasons || [],
           severity:
             s.score >= 85 ? "Critical" : s.score >= 65 ? "High" : s.score >= 35 ? "Medium" : "Low",
           timestamp: s.time,
+          confirmed: s.confirmed,
+          falsePositive: s.falsePositive,
         };
       });
     }

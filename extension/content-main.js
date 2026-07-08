@@ -288,21 +288,47 @@ if (isVeritasSite) {
   });
 
   window.addEventListener("veritas:update", (e) => {
-    if (e.detail === "veritas:settings") {
+    if (e.detail === "veritas:settings" || e.detail === "*") {
       try {
         const localSettings = localStorage.getItem("veritas:settings");
         if (localSettings) {
           chrome.storage.local.set({ settings: JSON.parse(localSettings) });
+        } else if (e.detail === "*") {
+          chrome.storage.local.set({
+            settings: {
+              modules: {
+                phishing: true,
+                scam: true,
+                aiContent: true,
+                darkPattern: true,
+                qrDetector: false,
+                voiceClone: false,
+              },
+              controls: { autoScan: true, popupAlerts: true, overlayAlerts: true, alertStyle: "Full overlay" },
+            }
+          });
         }
       } catch (err) {}
     }
-    if (e.detail === "veritas:trusted") {
+    if (e.detail === "veritas:trusted" || e.detail === "*") {
       try {
         const localTrusted = localStorage.getItem("veritas:trusted");
         if (localTrusted) {
           const parsed = JSON.parse(localTrusted);
           const domains = parsed.map((x) => x.domain.toLowerCase());
           chrome.storage.local.set({ trustedDomains: domains });
+        } else {
+          chrome.storage.local.set({ trustedDomains: [] });
+        }
+      } catch (err) {}
+    }
+    if (e.detail === "veritasai_scans" || e.detail === "veritas:threats" || e.detail === "*") {
+      try {
+        const localScans = localStorage.getItem("veritasai_scans");
+        if (localScans) {
+          chrome.storage.local.set({ scanHistory: JSON.parse(localScans) });
+        } else {
+          chrome.storage.local.set({ scanHistory: [] });
         }
       } catch (err) {}
     }

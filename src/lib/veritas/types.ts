@@ -9,8 +9,10 @@ export type DetectionModule =
   | "Heuristics"
   | "Malware Detection"
   | "New Domain — High Risk"
+  | "New Domain"
   | "SSL Check"
   | "Content NLP";
+
 
 export interface ThreatRecord {
   id: string;
@@ -26,6 +28,8 @@ export interface ThreatRecord {
   reasons: string[];
   severity: "Low" | "Medium" | "High" | "Critical";
   timestamp: number;
+  confirmed?: boolean;
+  falsePositive?: boolean;
 }
 
 export interface TrustedSite {
@@ -49,6 +53,7 @@ export interface SecuritySettings {
     autoScan: boolean;
     popupAlerts: boolean;
     overlayAlerts: boolean;
+    alertStyle?: string;
   };
   apiKeys?: {
     googleSafeBrowsing: string;
