@@ -28,10 +28,7 @@ const DEFAULT_TRUSTED: TrustedSite[] = [];
 // Global extension status state
 let globalExtensionInstalled =
   typeof window !== "undefined" &&
-  (document.documentElement.dataset.veritasShieldInstalled === "true" ||
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname.includes("veritasai-shield.vercel.app"));
+  document.documentElement.dataset.veritasShieldInstalled === "true";
 const listeners = new Set<(val: boolean) => void>();
 
 export function getExtensionInstalled() {
@@ -76,22 +73,12 @@ if (typeof window !== "undefined") {
 
     setTimeout(() => {
       if (!active) {
-        const isDemoEnv =
-          window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname.includes("veritasai-shield.vercel.app");
+        setExtensionInstalled(false);
+        delete document.documentElement.dataset.veritasShieldInstalled;
 
-        if (isDemoEnv) {
-          setExtensionInstalled(true);
-          document.documentElement.dataset.veritasShieldInstalled = "true";
-        } else {
-          setExtensionInstalled(false);
-          delete document.documentElement.dataset.veritasShieldInstalled;
-
-          // Wipe threat history from localStorage when extension is disabled or deleted
-          localStorage.removeItem("veritasai_scans");
-          window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
-        }
+        // Wipe threat history from localStorage when extension is disabled or deleted
+        localStorage.removeItem("veritasai_scans");
+        window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritas:threats" }));
       }
       window.removeEventListener("veritas_pong", handlePong);
     }, 250);
