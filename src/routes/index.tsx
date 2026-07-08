@@ -88,13 +88,7 @@ function LandingPage() {
             </Link>
           </div>
           <p className="text-xs text-muted-foreground">
-            Chrome extension • Manifest V3 • Free •{" "}
-            <a
-              href="/VeritasShield-Project-Report.pdf"
-              className="text-cyber-cyan hover:underline ml-1"
-            >
-              Download Project Report
-            </a>
+            Chrome extension • Manifest V3 • Free
           </p>
         </div>
 
