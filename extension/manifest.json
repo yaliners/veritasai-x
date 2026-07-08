@@ -5,7 +5,6 @@
   "description": "VeritasAI Shield protects you from phishing, malware, and scams on every website. Requires access to all URLs to scan each page you visit for real-time threats. No browsing data is sent to our servers — all analysis happens locally on your device.",
   "permissions": ["activeTab", "storage", "tabs", "scripting", "webNavigation"],
   "host_permissions": ["<all_urls>"],
-  "optional_host_permissions": ["<all_urls>"],
   "action": {
     "default_popup": "popup.html",
     "default_title": "VeritasShield AI",
