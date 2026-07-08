@@ -91,6 +91,13 @@ function ThreatCenter() {
               if (falsePositive) {
                 return {
                   ...s,
+                  origRisk: s.origRisk !== undefined ? s.origRisk : s.risk,
+                  origScore: s.origScore !== undefined ? s.origScore : s.score,
+                  origTrust: s.origTrust !== undefined ? s.origTrust : s.trustScore,
+                  origSeverity: s.origSeverity !== undefined ? s.origSeverity : s.severity,
+                  origPrediction: s.origPrediction !== undefined ? s.origPrediction : s.aiPrediction,
+                  origReasons: s.origReasons !== undefined ? s.origReasons : s.reasons,
+
                   confirmed: false,
                   falsePositive: true,
                   risk: "SAFE",
@@ -100,11 +107,38 @@ function ThreatCenter() {
                   aiPrediction: "No threats detected (marked False Positive)",
                   reasons: ["User marked false positive"],
                 };
+              } else if (confirmed) {
+                const base = {
+                  ...s,
+                  risk: s.origRisk !== undefined ? s.origRisk : s.risk,
+                  score: s.origScore !== undefined ? s.origScore : s.score,
+                  trustScore: s.origTrust !== undefined ? s.origTrust : s.trustScore,
+                  severity: s.origSeverity !== undefined ? s.origSeverity : s.severity,
+                  aiPrediction: s.origPrediction !== undefined ? s.origPrediction : s.aiPrediction,
+                  reasons: s.origReasons !== undefined ? s.origReasons : s.reasons,
+                };
+                return {
+                  ...base,
+                  confirmed: true,
+                  falsePositive: false,
+                };
               } else {
                 return {
                   ...s,
-                  confirmed: true,
+                  risk: s.origRisk !== undefined ? s.origRisk : s.risk,
+                  score: s.origScore !== undefined ? s.origScore : s.score,
+                  trustScore: s.origTrust !== undefined ? s.origTrust : s.trustScore,
+                  severity: s.origSeverity !== undefined ? s.origSeverity : s.severity,
+                  aiPrediction: s.origPrediction !== undefined ? s.origPrediction : s.aiPrediction,
+                  reasons: s.origReasons !== undefined ? s.origReasons : s.reasons,
+                  confirmed: false,
                   falsePositive: false,
+                  origRisk: undefined,
+                  origScore: undefined,
+                  origTrust: undefined,
+                  origSeverity: undefined,
+                  origPrediction: undefined,
+                  origReasons: undefined,
                 };
               }
             }
@@ -112,7 +146,13 @@ function ThreatCenter() {
           });
           localStorage.setItem("veritasai_scans", JSON.stringify(updated));
           window.dispatchEvent(new CustomEvent("veritas:update", { detail: "veritasai_scans" }));
-          toast.success(falsePositive ? "Marked as False Positive" : "Threat confirmed", {
+          
+          let msg = "Threat rating updated";
+          if (confirmed) msg = "Threat confirmed";
+          else if (falsePositive) msg = "Marked as False Positive";
+          else msg = "Rating reset to unrated";
+
+          toast.success(msg, {
             description: "Accuracy metrics updated accordingly.",
           });
         }
@@ -246,14 +286,31 @@ function ThreatCenter() {
                         <td className="mono text-cyber-success text-xs hidden md:table-cell">
                           {t.trustScore}
                         </td>
-                        <td className="text-xs font-medium">
-                          {t.falsePositive ? (
-                            <span className="text-cyber-danger">✗ False Positive</span>
-                          ) : t.confirmed ? (
-                            <span className="text-cyber-success">✓ Confirmed</span>
-                          ) : (
-                            <span className="text-muted-foreground">— Not rated</span>
-                          )}
+                        <td className="text-xs font-medium" onClick={(e) => e.stopPropagation()}>
+                          <select
+                            value={t.falsePositive ? "fp" : t.confirmed ? "confirmed" : "none"}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "fp") {
+                                updateThreatStatus(t.id, false, true);
+                              } else if (val === "confirmed") {
+                                updateThreatStatus(t.id, true, false);
+                              } else {
+                                updateThreatStatus(t.id, false, false);
+                              }
+                            }}
+                            className={`rounded border border-border/40 bg-card/65 px-2 py-0.5 font-semibold text-[11px] outline-none cursor-pointer focus:border-cyber-cyan transition-colors ${
+                              t.falsePositive
+                                ? "text-cyber-danger border-cyber-danger/30"
+                                : t.confirmed
+                                  ? "text-cyber-success border-cyber-success/30"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            <option value="none" className="text-muted-foreground bg-card">Not rated</option>
+                            <option value="confirmed" className="text-cyber-success bg-card font-medium">✓ Confirmed</option>
+                            <option value="fp" className="text-cyber-danger bg-card font-medium">✗ False Positive</option>
+                          </select>
                         </td>
                         <td className="text-xs text-muted-foreground hidden md:table-cell">
                           {t.module}
